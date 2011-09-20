@@ -1459,6 +1459,7 @@ struct regname {
 #define RTYPE_PC	0x04000
 #define RTYPE_ACC	0x08000
 #define RTYPE_CCC	0x10000
+#define RTYPE_CAP	0x20000
 #define RNUM_MASK	0x000ff
 #define RWARN		0x80000
 
@@ -1549,6 +1550,42 @@ struct regname {
     {"$cc5",	RTYPE_FCC | RTYPE_CCC | 5}, \
     {"$cc6",	RTYPE_FCC | RTYPE_CCC | 6}, \
     {"$cc7",	RTYPE_FCC | RTYPE_CCC | 7}
+
+#define CAPABILITY_REGISTER_NUMBERS \
+    {"$c0",	RTYPE_CAP | 0},  \
+    {"$c1",	RTYPE_CAP | 1},  \
+    {"$c2",	RTYPE_CAP | 2},  \
+    {"$c3",	RTYPE_CAP | 3},  \
+    {"$c4",	RTYPE_CAP | 4},  \
+    {"$c5",	RTYPE_CAP | 5},  \
+    {"$c6",	RTYPE_CAP | 6},  \
+    {"$c7",	RTYPE_CAP | 7},  \
+    {"$c8",	RTYPE_CAP | 8},  \
+    {"$c9",	RTYPE_CAP | 9},  \
+    {"$c10",	RTYPE_CAP | 10}, \
+    {"$c11",	RTYPE_CAP | 11}, \
+    {"$c12",	RTYPE_CAP | 12}, \
+    {"$c13",	RTYPE_CAP | 13}, \
+    {"$c14",	RTYPE_CAP | 14}, \
+    {"$c15",	RTYPE_CAP | 15}, \
+    {"$c16",	RTYPE_CAP | 16}, \
+    {"$c17",	RTYPE_CAP | 17}, \
+    {"$c18",	RTYPE_CAP | 18}, \
+    {"$c19",	RTYPE_CAP | 19}, \
+    {"$c20",	RTYPE_CAP | 20}, \
+    {"$c21",	RTYPE_CAP | 21}, \
+    {"$c22",	RTYPE_CAP | 22}, \
+    {"$c23",	RTYPE_CAP | 23}, \
+    {"$c24",	RTYPE_CAP | 24}, \
+    {"$c25",	RTYPE_CAP | 25}, \
+    {"$c26",	RTYPE_CAP | 26}, \
+    {"$c27",	RTYPE_CAP | 27}, \
+    {"$c28",	RTYPE_CAP | 28}, \
+    {"$c29",	RTYPE_CAP | 29}, \
+    {"$c30",	RTYPE_CAP | 30}, \
+    {"$c31",	RTYPE_CAP | 31} 
+
+/* TODO: Add symbolic names */
 
 #define N32N64_SYMBOLIC_REGISTER_NAMES \
     {"$a4",	RTYPE_GP | 8},  \
@@ -1657,13 +1694,14 @@ static const struct regname reg_names[] = {
   FPU_REGISTER_NAMES,
   FPU_CONDITION_CODE_NAMES,
   COPROC_CONDITION_CODE_NAMES,
+  
 
   /* The $txx registers depends on the abi,
      these will be added later into the symbol table from
      one of the tables below once mips_abi is set after 
      parsing of arguments from the command line. */
   SYMBOLIC_REGISTER_NAMES,
-
+  CAPABILITY_REGISTER_NUMBERS,
   MIPS16_SPECIAL_REGISTER_NAMES,
   MDMX_VECTOR_REGISTER_NAMES,
   MIPS_DSP_ACCUMULATOR_NAMES,
@@ -8485,6 +8523,7 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 	    }
 	}
 
+      /* Parse argument list */
       create_insn (ip, insn);
       insn_error = NULL;
       argnum = 1;
@@ -8901,8 +8940,55 @@ do_msbd:
 		  s = expr_end;
 		  continue;
 
+                case 'o':
+	          my_getExpression (&imm_expr, s);
+	      	  check_absolute_expr (ip, &imm_expr);
+	      	  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
+	      	  imm_expr.X_op = O_absent;
+	      	  s = expr_end;
+	      	  continue;
+
 		case 'T': /* Coprocessor register.  */
 		  /* +T is for disassembly only; never match.  */
+		  break;
+
+                /* Capability register number.  */
+		case 'w':
+		case 'b':
+		case 'v':
+		  if (s[0] == '$' && s[1] == 'c' && ISDIGIT (s[2]))
+		    {
+                      c = *args;
+		      ++s;
+		      ++s;
+		      regno = 0;
+		      do
+		        {
+			  regno *= 10;
+			  regno += *s - '0';
+			  ++s;
+			}
+		      while (ISDIGIT (*s));
+		      if (regno > 31)
+			as_bad (_("Invalid register number (%d)"), regno);
+		      else if (c == 'w')
+			{
+			  INSERT_OPERAND (RT, *ip, regno);
+			  continue;
+			}
+		      else if (c == 'b')
+			{
+			  INSERT_OPERAND (RD, *ip, regno);
+			  continue;
+			}
+		      else if (c == 'v')
+			{
+			  INSERT_OPERAND (FD, *ip, regno);
+			  continue;
+			}
+		    }
+		  else
+		    as_bad (_("Invalid capability register number"));
 		  break;
 
 		case 't': /* Coprocessor register number.  */
@@ -9074,6 +9160,7 @@ do_msbd:
 	    case 'd':		/* destination register */
 	    case 's':		/* source register */
 	    case 't':		/* target register */
+	    case 'm':		/* target register */
 	    case 'r':		/* both target and source */
 	    case 'v':		/* both dest and source */
 	    case 'w':		/* both dest and target */
@@ -9134,6 +9221,9 @@ do_msbd:
 		    case 't':
 		    case 'E':
 		      INSERT_OPERAND (RT, *ip, regno);
+		      break;
+		    case 'm':
+		      INSERT_OPERAND (FD, *ip, regno);
 		      break;
 		    case 'x':
 		      /* This case exists because on the r3000 trunc

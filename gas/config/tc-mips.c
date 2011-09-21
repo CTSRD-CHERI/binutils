@@ -8233,6 +8233,7 @@ validate_mips_insn (const struct mips_opcode *opc)
 	  case '4': USE_BITS (OP_MASK_UDI4,	OP_SH_UDI4); 	break;
 	  case 'A': USE_BITS (OP_MASK_SHAMT,	OP_SH_SHAMT);	break;
 	  case 'B': USE_BITS (OP_MASK_INSMSB,	OP_SH_INSMSB);	break;
+	  case 'b': USE_BITS (OP_MASK_RD,	OP_SH_RD);	break;
 	  case 'C': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'D': USE_BITS (OP_MASK_RD,	OP_SH_RD);
 		    USE_BITS (OP_MASK_SEL,	OP_SH_SEL);	break;
@@ -8241,9 +8242,12 @@ validate_mips_insn (const struct mips_opcode *opc)
 	  case 'G': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'H': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'I': break;
+	  case 'o': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
 	  case 't': USE_BITS (OP_MASK_RT,	OP_SH_RT);	break;
 	  case 'T': USE_BITS (OP_MASK_RT,	OP_SH_RT);
 		    USE_BITS (OP_MASK_SEL,	OP_SH_SEL);	break;
+	  case 'v': USE_BITS (OP_MASK_FD,	OP_SH_FD);	break;
+	  case 'w': USE_BITS (OP_MASK_RT,	OP_SH_RT);	break;
 	  default:
 	    as_bad (_("internal: bad mips opcode (unknown extension operand type `+%c'): %s %s"),
 		    c, opc->name, opc->args);
@@ -8287,6 +8291,7 @@ validate_mips_insn (const struct mips_opcode *opc)
       case 'j':	USE_BITS (OP_MASK_DELTA,	OP_SH_DELTA);	break;
       case 'k':	USE_BITS (OP_MASK_CACHE,	OP_SH_CACHE);	break;
       case 'l': break;
+      case 'm': USE_BITS (OP_MASK_FD,		OP_SH_FD);	break;
       case 'o': USE_BITS (OP_MASK_DELTA,	OP_SH_DELTA);	break;
       case 'p':	USE_BITS (OP_MASK_DELTA,	OP_SH_DELTA);	break;
       case 'q':	USE_BITS (OP_MASK_CODE2,	OP_SH_CODE2);	break;

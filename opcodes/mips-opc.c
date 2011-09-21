@@ -186,7 +186,37 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"move",    "d,s",	0x0000002d, 0xfc1f07ff, WR_d|RD_s,		INSN2_ALIAS,	I3	},/* daddu */
 {"move",    "d,s",	0x00000021, 0xfc1f07ff, WR_d|RD_s,		INSN2_ALIAS,	I1	},/* addu */
 {"move",    "d,s",	0x00000025, 0xfc1f07ff,	WR_d|RD_s,		INSN2_ALIAS,	I1	},/* or */
-{"cscr",    "+w,+b,m",	0x49a00000, 0xffe0003f,	WR_D|RD_S|RD_T|FP_D,	0,		I1	},
+{"cscr",    "+w,+b,m",	0x49a00000, 0xffe0003f,	0,			0,		I1	},
+{"cjr",     "+b,m",	0x49000000, 0xffff003f,	0,			0,		I1	},
+{"cjalr",   "+b,m",	0x4b000000, 0xffff003f,	0,			0,		I1	},
+{"ccall",   "+w,+b",	0x4b400000, 0xffe007ff,	0,			0,		I1	},
+{"creturn", "",		0x4b600000, 0xffffffff,	0,			0,		I1	},
+{"cgetbase","t,+b",	0x48000001, 0xffe007ff,	0,			0,		I1	},
+{"cgetleng","t,+b",	0x48000000, 0xffe007ff,	0,			0,		I1	},
+{"cgetperm","t,+b",	0x48000006, 0xffe007ff,	0,			0,		I1	},
+{"cgettype","t,+b",	0x48000002, 0xffe007ff,	0,			0,		I1	},
+{"csettype","+w,+b,m",	0x48800002, 0xffe0003f,	0,			0,		I1	},
+{"cincbase","+w,+b,m",	0x48800001, 0xffe0003f,	0,			0,		I1	},
+{"cdecleng","+w,+b,m",	0x48800000, 0xffe0003f,	0,			0,		I1	},
+{"candperm","+w,+b,m",	0x48800006, 0xffe0003f,	0,			0,		I1	},
+{"clcr",    "+w,+b,m",	0x49800000, 0xffe0003f,	0,			0,		I1	},
+{"csealcode","+w,+b",   0x4a800000, 0xffe007ff,	0,			0,		I1	},
+{"csealdata","+w,+b,+v",0x49400000, 0xffe0003f,	0,			0,		I1	},
+{"cunseal", "+w,+b,+v", 0x49600000, 0xffe0003f,	0,			0,		I1	},
+{"clb",     "t,+b,+o",  0x4a200000, 0xffe00000,	0,			0,		I1	},
+{"clw",     "t,+b,+o",  0x4a400000, 0xffe00000,	0,			0,		I1	},
+{"cld",     "t,+b,+o",  0x4a600000, 0xffe00000,	0,			0,		I1	},
+{"clbr",    "t,+b,m",   0x48200000, 0xffe0003f,	0,			0,		I1	},
+{"cldr",    "t,+b,m",   0x48400000, 0xffe0003f,	0,			0,		I1	},
+{"clwr",    "t,+b,m",   0x48600000, 0xffe0003f,	0,			0,		I1	},
+{"csb",     "t,+b,+o",  0x4aa00000, 0xffe00000,	0,			0,		I1	},
+{"csw",     "t,+b,+o",  0x4ac00000, 0xffe00000,	0,			0,		I1	},
+/* TODO: opcode clash with CLD */
+{"csd",     "t,+b,+o",  0x4a600000, 0xffe00000,	0,			0,		I1	},
+/* TODO: cs[bwd]r clash with each other */
+{"csbr",    "t,+b,m",   0x48600000, 0xffe0003f,	0,			0,		I1	},
+{"cswr",    "t,+b,m",   0x48600000, 0xffe0003f,	0,			0,		I1	},
+{"csdr",    "t,+b,m",   0x48600000, 0xffe0003f,	0,			0,		I1	},
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */
 {"b",       "p",	0x04010000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* bgez 0 */
 {"bal",     "p",	0x04110000, 0xffff0000,	UBD|WR_31,		INSN2_ALIAS,	I1	},/* bgezal 0*/

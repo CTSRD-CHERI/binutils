@@ -862,7 +862,7 @@ print_insn_args (const char *d,
 	      break;
 
 	    case 'o':
-	      delta = ((l >> OP_SH_CDELTA) & OP_MASK_CDELTA) + 32;
+	      delta = ((l >> OP_SH_CDELTA) & OP_MASK_CDELTA);
 	      (*info->fprintf_func) (info->stream, "%d", delta);
 	      break;
 

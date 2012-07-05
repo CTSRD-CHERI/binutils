@@ -238,6 +238,8 @@ intl/config.h
 intl/config.intl
 intl/config.log
 intl/config.status
+intl/libintl.a
+intl/libintl.h
 ld/Makefile
 ld/config.cache
 ld/config.h
@@ -358,3 +360,7 @@ opcodes/po/POTFILES
 opcodes/stamp-h1
 opcodes/stamp-lib
 serdep.tmp
+Info.plist
+*.o
+*.dylib
+*.dSYM

@@ -195,8 +195,6 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cincbase","+w,+b,m",	0x48800001, 0xffe0003f,	0,			0,		I1	},
 {"cmove",   "+w,+b",	0x48800001, 0xffe007ff,	0,			0,		I1	},
 {"csetlen", "+w,+b,m",	0x48800000, 0xffe0003f,	0,			0,		I1	},
-{"cdeclen", "+w,+b,m",	0x48800000, 0xffe0003f,	0,			0,		I1	}, /* DEPRECATED */
-{"cdecleng","+w,+b,m",	0x48800000, 0xffe0003f,	0,			0,		I1	}, /* DEPRECATED */
 {"candperm","+w,+b,m",	0x48800006, 0xffe0003f,	0,			0,		I1	},
 {"cscr",    "+w,m(+b)",	0x49200000, 0xffe0003f,	0,			0,		I1	},
 {"clcr",    "+w,m(+b)",	0x49400000, 0xffe0003f,	0,			0,		I1	},

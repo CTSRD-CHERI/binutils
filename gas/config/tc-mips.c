@@ -8538,6 +8538,8 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 
 	  s += strspn (s, " \t");
 	  is_mdmx = 0;
+	  /* Switch on first character of operand (+ options are handled by
+	     a nested case statement, inside this switch) */
 	  switch (*args)
 	    {
 	    case '\0':		/* end of args */
@@ -8797,7 +8799,8 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 	      /* This is dependent on the next operand specifier
 		 is a base register specification.  */
 	      assert (args[1] == 'b' || args[1] == '5'
-		      || args[1] == '-' || args[1] == '4');
+		      || args[1] == '-' || args[1] == '4'
+		      || (args[1] == '+' && args[2] == 'b'));
 	      if (*s == '\0')
 		return;
 

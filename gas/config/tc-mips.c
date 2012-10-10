@@ -8248,6 +8248,7 @@ validate_mips_insn (const struct mips_opcode *opc)
 		    USE_BITS (OP_MASK_SEL,	OP_SH_SEL);	break;
 	  case 'v': USE_BITS (OP_MASK_FD,	OP_SH_FD);	break;
 	  case 'w': USE_BITS (OP_MASK_RT,	OP_SH_RT);	break;
+          case 'x': USE_BITS (OP_MASK_RS,       OP_SH_RS);      break;
 	  default:
 	    as_bad (_("internal: bad mips opcode (unknown extension operand type `+%c'): %s %s"),
 		    c, opc->name, opc->args);
@@ -8800,7 +8801,8 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 		 is a base register specification.  */
 	      assert (args[1] == 'b' || args[1] == '5'
 		      || args[1] == '-' || args[1] == '4'
-		      || (args[1] == '+' && args[2] == 'b'));
+		      || (args[1] == '+' && args[2] == 'b')
+                      || (args[1] == '+' && args[2] == 'w'));
 	      if (*s == '\0')
 		return;
 
@@ -8964,6 +8966,7 @@ do_msbd:
 		case 'w':
 		case 'b':
 		case 'v':
+                case 'x':
 		  if (s[0] == '$' && s[1] == 'c' && ISDIGIT (s[2]))
 		    {
                       c = *args;
@@ -8994,6 +8997,11 @@ do_msbd:
 			  INSERT_OPERAND (FD, *ip, regno);
 			  continue;
 			}
+                      else if (c == 'x')
+                        {
+                          INSERT_OPERAND (RS, *ip, regno);
+                          continue;
+                        }
 		    }
 		  else
 		    as_bad (_("Invalid capability register number"));

@@ -199,11 +199,12 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cmove",   "+w,+b",	0x48800002, 0xffe007ff,	0, 0, I1},
 {"csetlen", "+w,+b,m",	0x48800003, 0xffe0003f,	0, 0, I1},
 {"ccleartag", "+w",	0x48800005, 0xffe0ffff,	0, 0, I1},
-{"csc",     "+x,d(+w)", 0xf8000000, 0xfc0007ff, 0, 0, I1},
-{"clc",     "+x,d(+w)", 0xd8000000, 0xfc0007ff, 0, 0, I1},
-
-{"cscr",    "+w,m(+b)",	0x49200000, 0xffe0003f,	0,			0,		I1	},
-{"clcr",    "+w,m(+b)",	0x49400000, 0xffe0003f,	0,			0,		I1	},
+{"csc",     "+x,d,+o(+w)", 0xf8000000, 0xfc000000, 0, 0, I1},
+{"clc",     "+x,d,+o(+w)", 0xd8000000, 0xfc000000, 0, 0, I1},
+{"cscr",    "+x,d(+w)",	0xf8000000, 0xfc0007ff,	0, 0, I1},
+{"clcr",    "+x,d(+w)",	0xd8000000, 0xfc0007ff,	0, 0, I1},
+{"csci",    "+x,+o(+w)", 0xf8000000, 0xfc00f800, 0, 0, I1},
+{"clci",    "+x,+o(+w)", 0xd8000000, 0xfc00f800, 0, 0, I1},
 /* mask should be 0xfc000007. Because I don't have letters for the
  * other register and offset argument, temporarily mask them.
  * Hence mask of 0xfc0007ff.

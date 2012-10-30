@@ -865,9 +865,15 @@ print_insn_args (const char *d,
               (*info->fprintf_func) (info->stream, "c%d", (l >> OP_SH_RS) &
                                      OP_MASK_RS);
               break;
+
 	    case 'o':
 	      delta = ((l >> OP_SH_CDELTA) & OP_MASK_CDELTA);
 	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'O':
+              delta = ((l >> OP_SH_CDELTA2) & OP_MASK_CDELTA2);
+              (*info->fprintf_func) (info->stream, "%d", delta);
 	      break;
 
 	    default:

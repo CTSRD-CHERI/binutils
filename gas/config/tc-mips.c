@@ -8243,6 +8243,7 @@ validate_mips_insn (const struct mips_opcode *opc)
 	  case 'H': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'I': break;
 	  case 'o': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
+	  case 'O': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
 	  case 't': USE_BITS (OP_MASK_RT,	OP_SH_RT);	break;
 	  case 'T': USE_BITS (OP_MASK_RT,	OP_SH_RT);
 		    USE_BITS (OP_MASK_SEL,	OP_SH_SEL);	break;
@@ -8957,6 +8958,14 @@ do_msbd:
 	      	  imm_expr.X_op = O_absent;
 	      	  s = expr_end;
 	      	  continue;
+
+		case 'O':
+		  my_getExpression (&imm_expr, s);
+		  check_absolute_expr (ip, &imm_expr);
+		  INSERT_OPERAND (CDELTA2, *ip, imm_expr.X_add_number);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
 
 		case 'T': /* Coprocessor register.  */
 		  /* +T is for disassembly only; never match.  */

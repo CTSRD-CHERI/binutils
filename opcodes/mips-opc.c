@@ -270,13 +270,16 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"clldi",     "v,+O(+w)",   0xc8000007, 0xfc00f807, 0, 0, I1},
 {"cscdi",     "v,+O(+w)",   0xe8000007, 0xfc00f807, 0, 0, I1},
 
-{"cjr",       "m(+b)",      0x49000000, 0xffff003f, 0, 0, I1},
-{"cjalr",     "m(+b)",      0x48e00000, 0xffff003f, 0, 0, I1},
 {"csealcode", "+w,+b",      0x48200000, 0xffe007ff, 0, 0, I1},
 {"csealdata", "+w,+b,+v",   0x48400000, 0xffe0003f, 0, 0, I1},
 {"cunseal",   "+w,+b,+v",   0x48600000, 0xffe0003f, 0, 0, I1},
 {"ccall",     "+w,+b",      0x48a00000, 0xffe007ff, 0, 0, I1},
 {"creturn", "",		    0x48c00000, 0xffffffff, 0, 0, I1},
+{"cjalr",     "m(+b)",      0x48e00000, 0xffff003f, 0, 0, I1},
+{"cjr",       "m(+b)",      0x49000000, 0xffff003f, 0, 0, I1},
+{"cbtf",      "+w,p",       0x49200000, 0xffe00000, 0, 0, I1},
+{"cbtt",      "+w,p",       0x49400000, 0xffe00000, 0, 0, I1},
+
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */
 {"b",       "p",	0x04010000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* bgez 0 */
 {"bal",     "p",	0x04110000, 0xffff0000,	UBD|WR_31,		INSN2_ALIAS,	I1	},/* bgezal 0*/

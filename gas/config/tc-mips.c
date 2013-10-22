@@ -15216,21 +15216,6 @@ MIPS options:\n\
 #endif
 }
 
-enum dwarf2_format
-mips_dwarf2_format (void)
-{
-  if (HAVE_64BIT_SYMBOLS)
-    {
-#ifdef TE_IRIX
-      return dwarf2_format_64bit_irix;
-#else
-      return dwarf2_format_64bit;
-#endif
-    }
-  else
-    return dwarf2_format_32bit;
-}
-
 int
 mips_dwarf2_addr_size (void)
 {

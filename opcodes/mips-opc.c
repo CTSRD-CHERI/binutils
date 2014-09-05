@@ -191,8 +191,8 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cgetlen",  "t,+b",	    0x48000003, 0xffe007ff, 0, 0, I1},
 {"cgetcause", "t",          0x48000004, 0xffe0ffff, 0, 0, I1},
 {"cgettag",  "t,+b",        0x48000005, 0xffe007ff, 0, 0, I1},
-{"cgetunsealed", "t,+b",    0x48000006, 0xffe007ff, 0, 0, I1},
-{"cgetpcc",  "t(+b)",       0x48000007, 0xffe007ff, 0, 0, I1},
+{"cgetsealed", "t,+b",      0x48000006, 0xffe007ff, 0, 0, I1},
+{"cgetpcc", "+b",           0x48000007, 0xffff07ff, 0, 0, I1},
 {"cgetoffset", "t,+b",      0x49a00002, 0xffe007ff, 0, 0, I1},
 {"candperm", "+w,+b,m",	    0x48800000, 0xffe0003f, 0, 0, I1},
 {"csettype", "+w,+b,m",	    0x48800001, 0xffe0003f, 0, 0, I1},
@@ -285,6 +285,12 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cjr",       "m(+b)",      0x49000000, 0xffff003f, 0, 0, I1},
 {"cbtu",      "+w,p",       0x49200000, 0xffe00000, 0, 0, I1},
 {"cbts",      "+w,p",       0x49400000, 0xffe00000, 0, 0, I1},
+{"ceq",	      "t,+b,+v",    0x49c00000, 0xffe0003f, 0, 0, I1},
+{"cne",	      "t,+b,+v",    0x49c00001, 0xffe0003f, 0, 0, I1},
+{"clt",	      "t,+b,+v",    0x49c00002, 0xffe0003f, 0, 0, I1},
+{"cle",	      "t,+b,+v",    0x49c00003, 0xffe0003f, 0, 0, I1},
+{"cltu",      "t,+b,+v",    0x49c00004, 0xffe0003f, 0, 0, I1},
+{"cleu",      "t,+b,+v",    0x49c00005, 0xffe0003f, 0, 0, I1},
 
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */
 {"b",       "p",	0x04010000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* bgez 0 */

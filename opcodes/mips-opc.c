@@ -283,7 +283,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"ccall",     "+w,+b",      0x48a00000, 0xffe007ff, 0, 0, I1},
 {"creturn",   "",	    0x48c00000, 0xffffffff, 0, 0, I1},
 {"cjalr",     "+w,+b",      0x48e00000, 0xffe007ff, 0, 0, I1},
-{"cjr",       "m(+b)",      0x49000000, 0xffff003f, 0, 0, I1},
+{"cjr",       "+b",         0x49000000, 0xffff07ff, 0, 0, I1},
 {"cbtu",      "+w,p",       0x49200000, 0xffe00000, 0, 0, I1},
 {"cbts",      "+w,p",       0x49400000, 0xffe00000, 0, 0, I1},
 {"ceq",	      "t,+b,+v",    0x49c00000, 0xffe0003f, 0, 0, I1},

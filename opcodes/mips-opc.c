@@ -195,7 +195,6 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cgetpcc", "+b",           0x48000007, 0xffff07ff, 0, 0, I1},
 {"cgetoffset", "t,+b",      0x49a00002, 0xffe007ff, 0, 0, I1},
 {"candperm", "+w,+b,m",	    0x48800000, 0xffe0003f, 0, 0, I1},
-{"csettype", "+w,+b,m",	    0x48800001, 0xffe0003f, 0, 0, I1},
 {"cincbase", "+w,+b,m",	    0x48800002, 0xffe0003f, 0, 0, I1},
 {"cmove",    "+w,+b",	    0x48800002, 0xffe007ff, 0, 0, I1},
 {"csetlen",  "+w,+b,m",	    0x48800003, 0xffe0003f, 0, 0, I1},
@@ -277,8 +276,6 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cscdi",     "v,+O(+w)",   0xe8000007, 0xfc00f807, 0, 0, I1},
 
 {"cseal",     "+w,+b,+v",   0x48400000, 0xffe0003f, 0, 0, I1},
-{"csealcode", "+w,+b",      0x48200000, 0xffe007ff, 0, 0, I1},
-{"csealdata", "+w,+b,+v",   0x48400000, 0xffe0003f, 0, 0, I1},
 {"cunseal",   "+w,+b,+v",   0x48600000, 0xffe0003f, 0, 0, I1},
 {"ccall",     "+w,+b",      0x48a00000, 0xffe007ff, 0, 0, I1},
 {"creturn",   "",	    0x48c00000, 0xffffffff, 0, 0, I1},

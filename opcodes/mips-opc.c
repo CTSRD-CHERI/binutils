@@ -297,11 +297,11 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cltu",      "t,+b,+v",    0x49c00004, 0xffe0003f, 0, 0, I1},
 {"cleu",      "t,+b,+v",    0x49c00005, 0xffe0003f, 0, 0, I1},
 
-{"cscb",      "t,m,+b",     0x4a000000, 0xffe0003f, 0, 0, I1},
-{"csch",      "t,m,+b",     0x4a000001, 0xffe0003f, 0, 0, I1},
-{"cscw",      "t,m,+b",     0x4a000002, 0xffe0003f, 0, 0, I1},
+{"cscb",      "m,t,+b",     0x4a000000, 0xffe0003f, 0, 0, I1},
+{"csch",      "m,t,+b",     0x4a000001, 0xffe0003f, 0, 0, I1},
+{"cscw",      "m,t,+b",     0x4a000002, 0xffe0003f, 0, 0, I1},
 #ifdef NEW_CLLSCD
-{"cscd",      "t,m,+b",     0x4a000003, 0xffe0003f, 0, 0, I1},
+{"cscd",      "m,t,+b",     0x4a000003, 0xffe0003f, 0, 0, I1},
 #endif
 
 {"cllb",      "t,+b",       0x4a000008, 0xffe007ff, 0, 0, I1},

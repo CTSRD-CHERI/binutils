@@ -274,7 +274,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cswhi",     "v,+O(+w)",   0xe8000006, 0xfc00f807, 0, 0, I1},
 /* there is no csdhi */
 
-#ifndef NEW_CLLSCD
+#ifdef OLD_CLLSCD
 {"clld",      "v,d,+O(+w)", 0xc8000007, 0xfc000007, 0, 0, I1},
 {"cscd",      "v,d,+O(+w)", 0xe8000007, 0xfc000007, 0, 0, I1},
 {"clldr",     "v,d(+w)",    0xc8000007, 0xfc0007ff, 0, 0, I1},
@@ -301,20 +301,20 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cscb",      "m,t,+b",     0x4a000000, 0xffe0003f, 0, 0, I1},
 {"csch",      "m,t,+b",     0x4a000001, 0xffe0003f, 0, 0, I1},
 {"cscw",      "m,t,+b",     0x4a000002, 0xffe0003f, 0, 0, I1},
-#ifdef NEW_CLLSCD
+#ifndef OLD_CLLSCD
 {"cscd",      "m,t,+b",     0x4a000003, 0xffe0003f, 0, 0, I1},
 #endif
 
 {"cllb",      "t,+b",       0x4a000008, 0xffe007ff, 0, 0, I1},
 {"cllh",      "t,+b",       0x4a000009, 0xffe007ff, 0, 0, I1},
 {"cllw",      "t,+b",       0x4a00000a, 0xffe007ff, 0, 0, I1},
-#ifdef NEW_CLLSCD
+#ifndef OLD_CLLSCD
 {"clld",      "t,+b",       0x4a00000b, 0xffe007ff, 0, 0, I1},
 #endif
 {"cllbu",     "t,+b",       0x4a00000c, 0xffe007ff, 0, 0, I1},
 {"cllhu",     "t,+b",       0x4a00000d, 0xffe007ff, 0, 0, I1},
 {"cllwu",     "t,+b",       0x4a00000e, 0xffe007ff, 0, 0, I1},
-#ifdef NEW_CLLSCD
+#ifndef OLD_CLLSCD
 {"clldu",     "t,+b",       0x4a00000f, 0xffe007ff, 0, 0, I1},
 #endif
 

@@ -304,19 +304,18 @@ const struct mips_opcode mips_builtin_opcodes[] =
 #ifndef OLD_CLLSCD
 {"cscd",      "m,t,+b",     0x4a000003, 0xffe0003f, 0, 0, I1},
 #endif
+{"cscc",      "+v,t,+b",    0x4a000007, 0xffe0003f, 0, 0, I1},
 
-{"cllb",      "t,+b",       0x4a000008, 0xffe007ff, 0, 0, I1},
-{"cllh",      "t,+b",       0x4a000009, 0xffe007ff, 0, 0, I1},
-{"cllw",      "t,+b",       0x4a00000a, 0xffe007ff, 0, 0, I1},
+{"cllbu",     "t,+b",       0x4a000008, 0xffe007ff, 0, 0, I1},
+{"cllhu",     "t,+b",       0x4a000009, 0xffe007ff, 0, 0, I1},
+{"cllwu",     "t,+b",       0x4a00000a, 0xffe007ff, 0, 0, I1},
 #ifndef OLD_CLLSCD
 {"clld",      "t,+b",       0x4a00000b, 0xffe007ff, 0, 0, I1},
 #endif
-{"cllbu",     "t,+b",       0x4a00000c, 0xffe007ff, 0, 0, I1},
-{"cllhu",     "t,+b",       0x4a00000d, 0xffe007ff, 0, 0, I1},
-{"cllwu",     "t,+b",       0x4a00000e, 0xffe007ff, 0, 0, I1},
-#ifndef OLD_CLLSCD
-{"clldu",     "t,+b",       0x4a00000f, 0xffe007ff, 0, 0, I1},
-#endif
+{"cllb",      "t,+b",       0x4a00000c, 0xffe007ff, 0, 0, I1},
+{"cllh",      "t,+b",       0x4a00000d, 0xffe007ff, 0, 0, I1},
+{"cllw",      "t,+b",       0x4a00000e, 0xffe007ff, 0, 0, I1},
+{"cllc",      "+w,+b",      0x4a00000f, 0xffe007ff, 0, 0, I1},
 
 
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */

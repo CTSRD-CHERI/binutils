@@ -28,6 +28,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #if defined (__GNUC__) && ! defined (SEMOPS_DEFINE_INLINE)
 #define SEMOPS_DEFINE_INLINE
 #define SEMOPS_INLINE extern inline
+/* Modern compilers default -std=c99 which means extern inline will cause linker errors here */
+#if (__STDC_VERSION__ >= 199901L)
+#error "This file must be compiled with -std=gnu89" otherwise there will be linker errors"
+#endif
 #else
 #define SEMOPS_INLINE
 #endif

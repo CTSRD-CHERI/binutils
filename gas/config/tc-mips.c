@@ -8422,8 +8422,11 @@ validate_mips_insn (const struct mips_opcode *opc)
 	  case 'G': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'H': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'I': break;
-	  case 'o': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
+	  case 's': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
 	  case 'O': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
+	  case 'P': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
+	  case 'Q': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
+	  case 'R': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
 	  case 't': USE_BITS (OP_MASK_RT,	OP_SH_RT);	break;
 	  case 'T': USE_BITS (OP_MASK_RT,	OP_SH_RT);
 		    USE_BITS (OP_MASK_SEL,	OP_SH_SEL);	break;
@@ -9208,18 +9211,54 @@ do_msbd:
 		  s = expr_end;
 		  continue;
 
-                case 'o':
-	          my_getExpression (&imm_expr, s);
+                case 's':
+		  my_getExpression (&imm_expr, s);
 		  check_absolute_expr (ip, &imm_expr);
 		  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
+		  if ((imm_expr.X_add_number  % 16) != 0)
+		    as_bad (_("immediate (%ld) not 16-byte aligned"),
+		      (long)imm_expr.X_add_number);
+		  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number >> 4);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
+		case 'O':
+		  my_getExpression (&imm_expr, s);
+		  check_absolute_expr (ip, &imm_expr);
+		  INSERT_OPERAND (CDELTA2, *ip, imm_expr.X_add_number >> 0);
 		  imm_expr.X_op = O_absent;
 		  s = expr_end;
 		  continue;
 
-		case 'O':
+		case 'P':
 		  my_getExpression (&imm_expr, s);
 		  check_absolute_expr (ip, &imm_expr);
-		  INSERT_OPERAND (CDELTA2, *ip, imm_expr.X_add_number);
+		  if ((imm_expr.X_add_number  % 2) != 0)
+		    as_bad (_("immediate (%ld) not 2-byte aligned"),
+		      (long)imm_expr.X_add_number);
+		  INSERT_OPERAND (CDELTA2, *ip, imm_expr.X_add_number >> 1);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
+
+		case 'Q':
+		  my_getExpression (&imm_expr, s);
+		  check_absolute_expr (ip, &imm_expr);
+		  if ((imm_expr.X_add_number  % 4) != 0)
+		    as_bad (_("immediate (%ld) not 4-byte aligned"),
+		      (long)imm_expr.X_add_number);
+		  INSERT_OPERAND (CDELTA2, *ip, imm_expr.X_add_number >> 2);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
+
+		case 'R':
+		  my_getExpression (&imm_expr, s);
+		  check_absolute_expr (ip, &imm_expr);
+		  if ((imm_expr.X_add_number % 8) != 0)
+		    as_bad (_("immediate (%ld) not 8-byte aligned"),
+		      (long)imm_expr.X_add_number);
+		  INSERT_OPERAND (CDELTA2, *ip, imm_expr.X_add_number >> 3);
 		  imm_expr.X_op = O_absent;
 		  s = expr_end;
 		  continue;

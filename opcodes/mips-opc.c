@@ -196,6 +196,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cgettag",  "t,+b",        0x48000005, 0xffe007ff, 0, 0, I1},
 {"cgetsealed", "t,+b",      0x48000006, 0xffe007ff, 0, 0, I1},
 {"cgetpcc", "+b",           0x48000007, 0xffff07ff, 0, 0, I1},
+{"cgetpccsetoffset", "+b,t", 0x48000007, 0xffe007ff, 0, 0, I1},
 {"cgetoffset", "t,+b",      0x49a00002, 0xffe007ff, 0, 0, I1},
 {"candperm", "+w,+b,m",	    0x48800000, 0xffe0003f, 0, 0, I1},
 {"csettype", "+w,+b,m",	    0x48800001, 0xffe0003f, 0, 0, I1},

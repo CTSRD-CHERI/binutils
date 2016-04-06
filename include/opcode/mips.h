@@ -90,6 +90,8 @@ Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, US
 #define OP_SH_CODE20		6
 #define OP_MASK_SHAMT		0x1f
 #define OP_SH_SHAMT		6
+#define OP_MASK_BITIND          OP_MASK_RT
+#define OP_SH_BITIND            OP_SH_RT
 #define OP_MASK_FD		0x1f
 #define OP_SH_FD		6
 #define OP_MASK_TARGET		0x3ffffff
@@ -258,6 +260,8 @@ struct mips_opcode
 
    "<" 5 bit shift amount (OP_*_SHAMT)
    ">" shift amount between 32 and 63, stored after subtracting 32 (OP_*_SHAMT)
+   "^" 5 bit bit index amount (OP_*_BITIND)
+   "~" bit index between 32 and 63, stored after subtracting 32 (OP_*_BITIND)
    "a" 26 bit target address (OP_*_TARGET)
    "b" 5 bit base register (OP_*_RS)
    "c" 10 bit breakpoint code (OP_*_CODE)
@@ -283,6 +287,7 @@ struct mips_opcode
    "B" 20 bit syscall/breakpoint function code (OP_*_CODE20)
    "J" 19 bit wait function code (OP_*_CODE19)
    "x" accept and ignore register name
+   "y" 10 bit signed const (OP_*_CODE2)
    "z" must be zero register
    "K" 5 bit Hardware Register (rdhwr instruction) (OP_*_RD)
    "+A" 5 bit ins/ext/dins/dext/dinsm/dextm position, which becomes
@@ -389,9 +394,9 @@ struct mips_opcode
 
    Characters used so far, for quick reference when adding more:
    "234567890"
-   "%[]<>(),+:'@!$*&"
+   "%[]<>(),+:'@!$*&^~"
    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-   "abcdefghijklmopqrstuvwxz"
+   "abcdefghijklmopqrstuvwxyz"
 
    Extension character sequences used so far ("+" followed by the
    following), for quick reference when adding more:
@@ -540,6 +545,8 @@ struct mips_opcode
 #define INSN_SMARTMIPS            0x10000000
 /* DSP R2 ASE  */
 #define INSN_DSPR2                0x20000000
+/* Cavium Networks Octeon instruction. */
+#define INSN_OCTEON		  0x08000000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -587,6 +594,7 @@ struct mips_opcode
 #define CPU_MIPS64      64
 #define CPU_MIPS64R2	65
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
+#define CPU_OCTEON	6502
 
 /* Test for membership in an ISA including chip specific ISAs.  INSN
    is pointer to an element of the opcode table; ISA is the specified
@@ -604,6 +612,7 @@ struct mips_opcode
      || ((cpu == CPU_R10000 || cpu == CPU_R12000)			\
 	 && ((insn)->membership & INSN_10000) != 0)			\
      || (cpu == CPU_SB1 && ((insn)->membership & INSN_SB1) != 0)	\
+     || (cpu == CPU_OCTEON && ((insn)->membership & INSN_OCTEON) != 0)  \
      || (cpu == CPU_R4111 && ((insn)->membership & INSN_4111) != 0)	\
      || (cpu == CPU_VR4120 && ((insn)->membership & INSN_4120) != 0)	\
      || (cpu == CPU_VR5400 && ((insn)->membership & INSN_5400) != 0)	\
@@ -765,6 +774,8 @@ enum
   M_S_DOB,
   M_S_DAB,
   M_S_S,
+  M_SAA_AB,
+  M_SAAD_AB,
   M_SC_AB,
   M_SCD_AB,
   M_SD_A,

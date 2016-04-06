@@ -396,22 +396,24 @@ distclean-libtool:
 	-rm -f libtool
 
 gprof.info: gprof.texi $(gprof_TEXINFOS)
-	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
-	rm -rf $$backupdir && mkdir $$backupdir && \
-	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
-	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
-	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
-	  done; \
-	else :; fi && \
-	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) \
-	 -o $@ `test -f 'gprof.texi' || echo '$(srcdir)/'`gprof.texi; \
-	then \
-	  rc=0; \
-	else \
-	  rc=$$?; \
-	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
-	fi; \
-	rm -rf $$backupdir; exit $$rc
+	# HACK: rebuilding this does not work with texinfo 6.0 and newer
+	@echo Skipping gprof.info
+# 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+# 	rm -rf $$backupdir && mkdir $$backupdir && \
+# 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+# 	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
+# 	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
+# 	  done; \
+# 	else :; fi && \
+# 	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) \
+# 	 -o $@ `test -f 'gprof.texi' || echo '$(srcdir)/'`gprof.texi; \
+# 	then \
+# 	  rc=0; \
+# 	else \
+# 	  rc=$$?; \
+# 	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
+# 	fi; \
+# 	rm -rf $$backupdir; exit $$rc
 
 gprof.dvi: gprof.texi $(gprof_TEXINFOS) 
 	TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \

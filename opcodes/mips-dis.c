@@ -41,6 +41,13 @@
 /* Mips instructions are at maximum this many bytes long.  */
 #define INSNLEN 4
 
+/* Generate Octeon/MIPS unaligned load and store instructions. */
+#ifdef INCLUDE_OCTEON_USEUN
+int octeon_use_unalign = 1;
+#else
+int octeon_use_unalign = 0;
+#endif
+
 
 /* FIXME: These should be shared with gdb somehow.  */
 
@@ -295,6 +302,36 @@ static const struct mips_cp0sel_name mips_cp0sel_names_sb1[] =
   { 29, 3, "c0_datahi_d"	},
 };
 
+static const char * const mips_cp0_names_octeon[32] = {
+  "c0_index",     "c0_random",    "c0_entrylo0",  "c0_entrylo1",
+  "c0_context",   "c0_pagemask",  "c0_wired",     "c0_hwrena",
+  "c0_badvaddr",  "c0_count",     "c0_entryhi",   "c0_compare",
+  "c0_status",    "c0_cause",     "c0_epc",       "c0_prid",
+  "c0_config",    "$17",          "c0_watchlo",   "c0_watchhi",
+  "c0_xcontext",  "$21",          "c0_mdebug",    "c0_debug",
+  "c0_depc",      "c0_perfcnt",   "$26",          "c0_cacheerr",
+  "c0_taglo",     "c0_taghi",     "c0_errorepc",  "c0_desave",
+};
+
+static const struct mips_cp0sel_name mips_cp0sel_names_octeon[] = {
+  { 5,  1, "c0_pagegrain"               },
+  { 9,  6, "c0_cvmcount"                },
+  { 9,  7, "c0_cvmctl"                  },
+  { 11, 7, "c0_cvmmemctl"               },
+  { 12, 1, "c0_intctl"                  },
+  { 12, 2, "c0_srsctl"                  },
+  { 15, 1, "c0_ebase"                   },
+  { 16, 1, "c0_config1",                },
+  { 16, 2, "c0_config2",                },
+  { 16, 3, "c0_config3",                },
+  { 18, 1, "c0_watchlo,1"               },
+  { 19, 1, "c0_watchhi,1"               },
+  { 25, 2, "c0_perfcnt,2"               },
+  { 27, 1, "c0_cacheerr,1"              },
+  { 28, 3, "c0_datalo"                  },
+  { 29, 3, "c0_datahi"                  },
+};
+
 static const char * const mips_hwr_names_numeric[32] =
 {
   "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
@@ -424,6 +461,11 @@ const struct mips_arch_choice mips_arch_choices[] =
     ISA_MIPS64 | INSN_MIPS3D | INSN_SB1,
     mips_cp0_names_sb1,
     mips_cp0sel_names_sb1, ARRAY_SIZE (mips_cp0sel_names_sb1),
+    mips_hwr_names_numeric },
+
+  { "octeon",   1, bfd_mach_mips_octeon, CPU_OCTEON,
+    ISA_MIPS64R2 | INSN_OCTEON, mips_cp0_names_octeon,
+    mips_cp0sel_names_octeon, ARRAY_SIZE (mips_cp0sel_names_octeon),
     mips_hwr_names_numeric },
 
   /* This entry, mips16, is here only for ISA/processor selection; do
@@ -573,6 +615,17 @@ parse_mips_dis_option (const char *option, unsigned int len)
   const char *val;
   const struct mips_abi_choice *chosen_abi;
   const struct mips_arch_choice *chosen_arch;
+
+  if (strcmp ("octeon-useun", option) == 0)
+    {
+      octeon_use_unalign = 1;
+      return;
+    }
+  if (strcmp ("no-octeon-useun", option) == 0)
+    {
+      octeon_use_unalign = 0;
+      return;
+    }
 
   /* Try to match options that are simple flags */
   if (CONST_STRNEQ (option, "no-aliases"))
@@ -1094,6 +1147,22 @@ print_insn_args (const char *d,
 				 (l >> OP_SH_CODE2) & OP_MASK_CODE2);
 	  break;
 
+	/* Display 5 bits of bbit0/1 bit index amount. */
+	case '^':
+          (*info->fprintf_func) (info->stream, "0x%lx",
+                                 (l >> OP_SH_BITIND) & OP_MASK_BITIND);
+          break;
+
+	/* Display 10 bits signed constant from seqi/snei instruction. */
+	case 'y':
+          {
+            int imm = (l >> OP_SH_CODE2) & OP_MASK_CODE2;
+            imm <<= 22;
+            imm >>= 22;
+            (*info->fprintf_func) (info->stream, "%d", imm);
+          }
+          break;
+
 	case 'C':
 	  (*info->fprintf_func) (info->stream, "0x%lx",
 				 (l >> OP_SH_COPZ) & OP_MASK_COPZ);
@@ -1315,6 +1384,27 @@ print_insn_mips (bfd_vma memaddr,
 	      if (! OPCODE_IS_MEMBER (op, mips_isa, mips_processor)
 		  && strcmp (op->name, "jalx"))
 		continue;
+
+	      if (info->mach == CPU_OCTEON && octeon_use_unalign)
+                {
+                  if (strcmp (op->name, "lwl") == 0
+                      || strcmp (op->name, "ldl") == 0
+                      || strcmp (op->name, "swl") == 0
+                      || strcmp (op->name, "sdl") == 0
+                      || strcmp (op->name, "lcache") == 0
+                      || strcmp (op->name, "scache") == 0
+                      || strcmp (op->name, "flush") == 0)
+                    continue;
+                                                                                
+                  if (strcmp (op->name, "ldr") == 0
+                       || strcmp (op->name, "lwr") == 0
+                       || strcmp (op->name, "swr") == 0
+                       || strcmp (op->name, "sdr") == 0)
+                    {
+                      (*info->fprintf_func) (info->stream, "nop");
+                      return INSNLEN;
+                    }
+                }
 
 	      /* Figure out instruction type and branch delay information.  */
 	      if ((op->pinfo & INSN_UNCOND_BRANCH_DELAY) != 0)
@@ -2088,6 +2178,12 @@ print_mips_disassembler_options (FILE *stream)
   fprintf (stream, _("\n\
 The following MIPS specific disassembler options are supported for use\n\
 with the -M switch (multiple options should be separated by commas):\n"));
+
+  fprintf (stream, _("\n\
+  octeon-useun             Disassemble Octeon unaligned load/store instructions.\n"));
+
+  fprintf (stream, _("\n\
+  no-octeon-useun          Disassemble mips unaligned load/store instructions.\n"));
 
   fprintf (stream, _("\n\
   gpr-names=ABI            Print GPR names according to  specified ABI.\n\

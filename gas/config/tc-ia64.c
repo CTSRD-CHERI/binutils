@@ -7704,8 +7704,10 @@ ia64_target_format ()
       else
 	{
 	  if (md.flags & EF_IA_64_ABI64)
-#ifdef TE_AIX50
+#if defined(TE_AIX50)
 	    return "elf64-ia64-aix-little";
+#elif defined(TE_FreeBSD)
+	    return "elf64-ia64-freebsd";
 #else
 	    return "elf64-ia64-little";
 #endif
@@ -11565,7 +11567,7 @@ fix_insn (fix, odesc, value)
     err = (*odesc->insert) (odesc, value, insn + slot);
 
   if (err)
-    as_bad_where (fix->fx_file, fix->fx_line, err);
+    as_bad_where (fix->fx_file, fix->fx_line, "%s", err);
 
   t0 = control_bits | (insn[0] << 5) | (insn[1] << 46);
   t1 = ((insn[1] >> 18) & 0x7fffff) | (insn[2] << 23);

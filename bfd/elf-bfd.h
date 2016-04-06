@@ -697,6 +697,10 @@ struct elf_backend_data
   bfd_boolean (*elf_backend_omit_section_dynsym)
     (bfd *output_bfd, struct bfd_link_info *info, asection *osec);
 
+  /* Return TRUE if relocations of targets are compatible to the extent
+     that CHECK_RELOCS will properly process them.  PR 4424.  */
+  bfd_boolean (*relocs_compatible) (const bfd_target *, const bfd_target *);
+
   /* The CHECK_RELOCS function is called by the add_symbols phase of
      the ELF backend linker.  It is called once for each section with
      relocs of an object file, just after the symbols for the object
@@ -1282,7 +1286,7 @@ struct elf_find_verdep_info
 };
 
 /* The maximum number of known object attributes for any target.  */
-#define NUM_KNOWN_OBJ_ATTRIBUTES 32
+#define NUM_KNOWN_OBJ_ATTRIBUTES 71
 
 /* The value of an object attribute.  type & 1 indicates whether there
    is an integer value; type & 2 indicates whether there is a string
@@ -1915,6 +1919,12 @@ extern void bfd_elf64_write_relocs
 extern bfd_boolean bfd_elf64_slurp_reloc_table
   (bfd *, asection *, asymbol **, bfd_boolean);
 
+extern bfd_boolean _bfd_elf_default_relocs_compatible
+  (const bfd_target *, const bfd_target *);
+
+extern bfd_boolean _bfd_elf_relocs_compatible
+  (const bfd_target *, const bfd_target *);
+
 extern struct elf_link_hash_entry *_bfd_elf_archive_symbol_lookup
   (bfd *, struct bfd_link_info *, const char *);
 extern bfd_boolean bfd_elf_link_add_symbols
@@ -2003,6 +2013,8 @@ extern char * elfcore_write_pstatus
   (bfd *, char *, int *, long, int, const void *);
 extern char *elfcore_write_prfpreg
   (bfd *, char *, int *, const void *, int);
+extern char *elfcore_write_thrmisc
+  (bfd *, char *, int *, const char *, int);
 extern char *elfcore_write_prxfpreg
   (bfd *, char *, int *, const void *, int);
 extern char *elfcore_write_lwpstatus

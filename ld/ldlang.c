@@ -1478,8 +1478,16 @@ lang_insert_orphan (asection *s,
       lang_list_init (stat_ptr);
     }
 
+  if (link_info.relocatable || (s->flags & (SEC_LOAD | SEC_ALLOC)) == 0)
+    address = exp_intop (0);
+
+  os_tail = ((lang_output_section_statement_type **)
+	     lang_output_section_statement.tail);
+  os = lang_enter_output_section_statement (secname, address, 0, NULL, NULL,
+					    NULL, 0);
+
   ps = NULL;
-  if (config.build_constructors)
+  if (config.build_constructors && *os_tail == os)
     {
       /* If the name of the section is representable in C, then create
 	 symbols to mark the start and the end of the section.  */
@@ -1498,18 +1506,11 @@ lang_insert_orphan (asection *s,
 			      exp_intop ((bfd_vma) 1 << s->alignment_power));
 	  lang_add_assignment (exp_assop ('=', ".", e_align));
 	  lang_add_assignment (exp_provide (symname,
-					    exp_nameop (NAME, "."),
+					    exp_unop (ABSOLUTE,
+						      exp_nameop (NAME, ".")),
 					    FALSE));
 	}
     }
-
-  if (link_info.relocatable || (s->flags & (SEC_LOAD | SEC_ALLOC)) == 0)
-    address = exp_intop (0);
-
-  os_tail = ((lang_output_section_statement_type **)
-	     lang_output_section_statement.tail);
-  os = lang_enter_output_section_statement (secname, address, 0, NULL, NULL,
-					    NULL, 0);
 
   if (add_child == NULL)
     add_child = &os->children;
@@ -1517,7 +1518,7 @@ lang_insert_orphan (asection *s,
 
   lang_leave_output_section_statement (0, "*default*", NULL, NULL);
 
-  if (config.build_constructors && *ps == '\0')
+  if (ps != NULL && *ps == '\0')
     {
       char *symname;
 
@@ -4273,9 +4274,10 @@ lang_size_sections_1
 			   " section %s\n"), os->name);
 
 		input = os->children.head->input_section.section;
-		bfd_set_section_vma (os->bfd_section->owner,
-				     os->bfd_section,
-				     bfd_section_vma (input->owner, input));
+		(void) bfd_set_section_vma (os->bfd_section->owner,
+					    os->bfd_section,
+					    bfd_section_vma (input->owner,
+							     input));
 		os->bfd_section->size = input->size;
 		break;
 	      }
@@ -4360,7 +4362,7 @@ lang_size_sections_1
 			     os->name, (unsigned long) (newdot - savedot));
 		  }
 
-		bfd_set_section_vma (0, os->bfd_section, newdot);
+		(void) bfd_set_section_vma (0, os->bfd_section, newdot);
 
 		os->bfd_section->output_offset = 0;
 	      }

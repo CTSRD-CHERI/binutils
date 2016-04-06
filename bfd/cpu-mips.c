@@ -85,6 +85,7 @@ enum
   I_mipsisa32r2,
   I_mipsisa64,
   I_mipsisa64r2,
+  I_mipsocteon,
   I_sb1,
 };
 
@@ -118,6 +119,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (32, 32, bfd_mach_mipsisa32r2,"mips:isa32r2", FALSE, NN(I_mipsisa32r2)),
   N (64, 64, bfd_mach_mipsisa64,  "mips:isa64",   FALSE, NN(I_mipsisa64)),
   N (64, 64, bfd_mach_mipsisa64r2,"mips:isa64r2", FALSE, NN(I_mipsisa64r2)),
+  N (64, 64, bfd_mach_mips_octeon,"mips:octeon",  FALSE, NN(I_mipsocteon)),
   N (64, 64, bfd_mach_mips_sb1, "mips:sb1",       FALSE, 0),
 };
 

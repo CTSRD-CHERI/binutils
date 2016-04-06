@@ -19,26 +19,35 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301,
    USA.  */
 
-/* FreeBSD ZMAGIC files never have the header in the text. */
-#define	N_HEADER_IN_TEXT(x)	0
+/* $FreeBSD$ */
 
-/* ZMAGIC files start at offset 0.  Does not apply to QMAGIC files. */
-#define TEXT_START_ADDR		0
+/* FreeBSD QMAGIC files have the header in the text. */
+#define	N_HEADER_IN_TEXT(x)	1
+#define MY_text_includes_header 1
 
-#define N_GETMAGIC_NET(exec) \
-	((exec).a_info & 0xffff)
-#define N_GETMID_NET(exec) \
-	(((exec).a_info >> 16) & 0x3ff)
-#define N_GETFLAG_NET(ex) \
-	(((exec).a_info >> 26) & 0x3f)
+#define TEXT_START_ADDR		(TARGET_PAGE_SIZE + 0x20)
+
+/*
+ * FreeBSD uses a weird mix of byte orderings for its a_info field.
+ * Its assembler emits NetBSD style object files, with a big-endian
+ * a_info.  Its linker seems to accept either byte ordering, but
+ * emits a little-endian a_info.
+ *
+ * Here, we accept either byte ordering, but always produce
+ * little-endian.
+ *
+ * FIXME - Probably we should always produce the _native_ byte
+ * ordering.  I.e., it should be in the architecture-specific
+ * file, not here.  But in reality, there is no chance
+ * that FreeBSD will ever use a.out in a new port.
+ */
 
 #define N_MACHTYPE(exec) \
 	((enum machine_type) \
-	 ((N_GETMAGIC_NET (exec) == ZMAGIC) ? N_GETMID_NET (exec) : \
-	  ((exec).a_info >> 16) & 0x3ff))
+	 ((freebsd_swap_magic(&(exec).a_info) >> 16) & 0x3ff))
 #define N_FLAGS(exec) \
-	((N_GETMAGIC_NET (exec) == ZMAGIC) ? N_GETFLAG_NET (exec) : \
-	 ((exec).a_info >> 26) & 0x3f)
+	((enum machine_type) \
+	 ((freebsd_swap_magic(&(exec).a_info) >> 26) & 0x3f))
 
 #define N_SET_INFO(exec, magic, type, flags) \
 	((exec).a_info = ((magic) & 0xffff) \
@@ -56,14 +65,39 @@
 #include "libbfd.h"
 #include "libaout.h"
 
-/* On FreeBSD, the magic number is always in i386 (little-endian)
-   format.  I think.  */
-#define SWAP_MAGIC(ext) bfd_getl32 (ext)
+#define SWAP_MAGIC(ext)			(freebsd_swap_magic(ext))
 
+#define MY_bfd_final_link MY (bfd_final_link)
 #define MY_write_object_contents MY (write_object_contents)
+static bfd_boolean MY (bfd_final_link) (bfd *, struct bfd_link_info *);
 static bfd_boolean MY (write_object_contents) (bfd *);
+static long freebsd_swap_magic (void *);
 
 #include "aout-target.h"
+
+static bfd_boolean
+MY (bfd_final_link) (bfd *abfd, struct bfd_link_info *info)
+{
+  obj_aout_subformat (abfd) = q_magic_format;
+  return NAME(aout,final_link) (abfd, info, MY_final_link_callback);
+}
+
+/* Swap a magic number.  We accept either endian, whichever looks valid. */
+
+static long
+freebsd_swap_magic (void *ext)
+{
+  long linfo = bfd_getl32(ext);
+  long binfo = bfd_getb32(ext);
+  int lmagic = linfo & 0xffff;
+  int bmagic = binfo & 0xffff;
+  int lmagic_ok = lmagic == OMAGIC || lmagic == NMAGIC ||
+    lmagic == ZMAGIC || lmagic == QMAGIC;
+  int bmagic_ok = bmagic == OMAGIC || bmagic == NMAGIC ||
+    bmagic == ZMAGIC || bmagic == QMAGIC;
+
+  return bmagic_ok && !lmagic_ok ? binfo : linfo;
+}
 
 /* Write an object file.
    Section contents have already been written.  We write the

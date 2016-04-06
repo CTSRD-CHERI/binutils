@@ -634,7 +634,9 @@ coff_amd64_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 #define coff_bfd_reloc_type_lookup coff_amd64_reloc_type_lookup
+#ifdef notyet
 #define coff_bfd_reloc_name_lookup coff_amd64_reloc_name_lookup
+#endif
 
 static reloc_howto_type *
 coff_amd64_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real_type code)
@@ -665,9 +667,11 @@ coff_amd64_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real_ty
       return howto_table + R_RELBYTE;
     case BFD_RELOC_8_PCREL:
       return howto_table + R_PCRBYTE;
+#ifdef notyet
 #if defined(COFF_WITH_PE)
     case BFD_RELOC_32_SECREL:
       return howto_table + R_AMD64_SECREL;
+#endif
 #endif
     default:
       BFD_FAIL ();
@@ -675,6 +679,7 @@ coff_amd64_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real_ty
     }
 }
 
+#ifdef notyet
 static reloc_howto_type *
 coff_amd64_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 			      const char *r_name)
@@ -688,6 +693,7 @@ coff_amd64_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
   return NULL;
 }
+#endif
 
 #define coff_rtype_to_howto coff_amd64_rtype_to_howto
 

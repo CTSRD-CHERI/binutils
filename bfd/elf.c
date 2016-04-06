@@ -19,6 +19,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
+
+/* $FreeBSD$ */
+
+
 /*
 SECTION
 	ELF backends
@@ -4399,7 +4403,12 @@ assign_file_positions_for_load_sections (bfd *abfd,
 
       no_contents = FALSE;
       off_adjust = 0;
-      if (p->p_type == PT_LOAD
+      if (p->p_type == PT_NOTE)
+	{
+	  for (i = 0; i < m->count; i++)
+	    elf_section_type (m->sections[i]) = SHT_NOTE;
+	}
+      else if (p->p_type == PT_LOAD
 	  && m->count > 0)
 	{
 	  bfd_size_type align;
@@ -4980,6 +4989,8 @@ prep_headers (bfd *abfd)
   i_ehdrp->e_ident[EI_DATA] =
     bfd_big_endian (abfd) ? ELFDATA2MSB : ELFDATA2LSB;
   i_ehdrp->e_ident[EI_VERSION] = bed->s->ev_current;
+
+  i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
 
   if ((abfd->flags & DYNAMIC) != 0)
     i_ehdrp->e_type = ET_DYN;
@@ -7437,6 +7448,12 @@ _bfd_elf_rel_vtable_reloc_fn
 
 #ifdef HAVE_SYS_PROCFS_H
 # include <sys/procfs.h>
+
+/* Define HAVE_THRMISC_T for consistency with other similar GNU-type stubs. */
+#undef	HAVE_THRMISC_T
+#if defined (THRMISC_VERSION)
+#define	HAVE_THRMISC_T	1
+#endif
 #endif
 
 /* FIXME: this is kinda wrong, but it's what gdb wants.  */
@@ -7616,6 +7633,16 @@ elfcore_grok_prxfpreg (bfd *abfd, Elf_Internal_Note *note)
 {
   return elfcore_make_note_pseudosection (abfd, ".reg-xfp", note);
 }
+
+#if defined (HAVE_THRMISC_T)
+
+static bfd_boolean
+elfcore_grok_thrmisc (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".tname", note);
+}
+
+#endif /* defined (HAVE_THRMISC_T) */
 
 #if defined (HAVE_PRPSINFO_T)
 typedef prpsinfo_t   elfcore_psinfo_t;
@@ -7980,6 +8007,12 @@ elfcore_grok_note (bfd *abfd, Elf_Internal_Note *note)
 
 	return TRUE;
       }
+
+#if defined (HAVE_THRMISC_T)
+    case NT_THRMISC:
+      return elfcore_grok_thrmisc (abfd, note);
+#endif
+
     }
 }
 
@@ -8442,6 +8475,22 @@ elfcore_write_prfpreg (bfd *abfd,
   const char *note_name = "CORE";
   return elfcore_write_note (abfd, buf, bufsiz,
 			     note_name, NT_FPREGSET, fpregs, size);
+}
+
+char *
+elfcore_write_thrmisc (bfd *abfd,
+		       char *buf,
+		       int *bufsiz,
+		       const char *tname,
+		       int size)
+{
+#if defined (HAVE_THRMISC_T)
+  char *note_name = "CORE";
+  return elfcore_write_note (abfd, buf, bufsiz,
+			     note_name, NT_THRMISC, tname, size);
+#else
+  return buf;
+#endif
 }
 
 char *

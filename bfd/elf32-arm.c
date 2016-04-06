@@ -60,7 +60,11 @@
 #define elf_info_to_howto_rel           elf32_arm_info_to_howto
 
 #define ARM_ELF_ABI_VERSION		0
+#ifdef __FreeBSD__
+#define ARM_ELF_OS_ABI_VERSION		ELFOSABI_FREEBSD
+#else
 #define ARM_ELF_OS_ABI_VERSION		ELFOSABI_ARM
+#endif
 
 static struct elf_backend_data elf32_arm_vxworks_bed;
 
@@ -1836,6 +1840,19 @@ elf32_arm_nabi_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 	size = 72;
 
 	break;
+
+      case 96:		/* FreeBSD/ARM */
+	/* pr_cursig */
+	if (elf_tdata(abfd)->core_signal == 0)
+	  elf_tdata (abfd)->core_signal = ((int *)(note->descdata))[5];
+
+	/* pr_pid */
+	elf_tdata (abfd)->core_pid = ((int *)(note->descdata))[6];
+
+	/* pr_reg */
+	offset = 28;
+	size = 68;
+	break;
     }
 
   /* Make a ".reg/999" section.  */
@@ -3262,6 +3279,9 @@ bfd_elf32_arm_init_maps (bfd *abfd)
   Elf_Internal_Sym *isymbuf;
   Elf_Internal_Shdr *hdr;
   unsigned int i, localsyms;
+
+  if (bfd_get_flavour (abfd) != bfd_target_elf_flavour || elf_tdata (abfd) == NULL)
+    return;
 
   if ((abfd->flags & DYNAMIC) != 0)
     return;
@@ -4940,7 +4960,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 		       + input_section->output_offset
 		       + rel->r_offset);
 
-        value = abs (relocation);
+        value = llabs (relocation);
 
         if (value >= 0x1000)
           return bfd_reloc_overflow;
@@ -4978,7 +4998,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 		       + input_section->output_offset
 		       + rel->r_offset);
 
-        value = abs (relocation);
+        value = llabs (relocation);
 
         if (value >= 0x1000)
           return bfd_reloc_overflow;
@@ -5780,7 +5800,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 	if (globals->use_rel)
 	  {
 	    addend = ((insn >> 4) & 0xf000) | (insn & 0xfff);
-	    signed_addend = (addend ^ 0x10000) - 0x10000;
+	    signed_addend = (addend ^ 0x8000) - 0x8000;
 	  }
 
 	value += signed_addend;
@@ -5964,7 +5984,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 
         /* Calculate the value of the relevant G_n, in encoded
            constant-with-rotation format.  */
-        g_n = calculate_group_reloc_mask (abs (signed_value), group,
+        g_n = calculate_group_reloc_mask (llabs (signed_value), group,
                                           &residual);
 
         /* Check for overflow if required.  */
@@ -5978,7 +5998,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
             (*_bfd_error_handler)
               (_("%B(%A+0x%lx): Overflow whilst splitting 0x%lx for group relocation %s"),
               input_bfd, input_section,
-              (long) rel->r_offset, abs (signed_value), howto->name);
+              (long) rel->r_offset, llabs (signed_value), howto->name);
             return bfd_reloc_overflow;
           }
 
@@ -6057,7 +6077,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 
         /* Calculate the value of the relevant G_{n-1} to obtain
            the residual at that stage.  */
-        calculate_group_reloc_mask (abs (signed_value), group - 1, &residual);
+        calculate_group_reloc_mask (llabs (signed_value), group - 1, &residual);
 
         /* Check for overflow.  */
         if (residual >= 0x1000)
@@ -6065,7 +6085,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
             (*_bfd_error_handler)
               (_("%B(%A+0x%lx): Overflow whilst splitting 0x%lx for group relocation %s"),
               input_bfd, input_section,
-              (long) rel->r_offset, abs (signed_value), howto->name);
+              (long) rel->r_offset, llabs (signed_value), howto->name);
             return bfd_reloc_overflow;
           }
 
@@ -6140,7 +6160,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 
         /* Calculate the value of the relevant G_{n-1} to obtain
            the residual at that stage.  */
-        calculate_group_reloc_mask (abs (signed_value), group - 1, &residual);
+        calculate_group_reloc_mask (llabs (signed_value), group - 1, &residual);
 
         /* Check for overflow.  */
         if (residual >= 0x100)
@@ -6148,7 +6168,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
             (*_bfd_error_handler)
               (_("%B(%A+0x%lx): Overflow whilst splitting 0x%lx for group relocation %s"),
               input_bfd, input_section,
-              (long) rel->r_offset, abs (signed_value), howto->name);
+              (long) rel->r_offset, llabs (signed_value), howto->name);
             return bfd_reloc_overflow;
           }
 
@@ -6223,7 +6243,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 
         /* Calculate the value of the relevant G_{n-1} to obtain
            the residual at that stage.  */
-        calculate_group_reloc_mask (abs (signed_value), group - 1, &residual);
+        calculate_group_reloc_mask (llabs (signed_value), group - 1, &residual);
 
         /* Check for overflow.  (The absolute value to go in the place must be
            divisible by four and, after having been divided by four, must
@@ -6233,7 +6253,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
             (*_bfd_error_handler)
               (_("%B(%A+0x%lx): Overflow whilst splitting 0x%lx for group relocation %s"),
               input_bfd, input_section,
-              (long) rel->r_offset, abs (signed_value), howto->name);
+              (long) rel->r_offset, llabs (signed_value), howto->name);
             return bfd_reloc_overflow;
           }
 
@@ -6774,15 +6794,31 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, bfd *obfd)
 	out_attr[Tag_ABI_VFP_args].i = in_attr[Tag_ABI_VFP_args].i;
       else if (in_attr[Tag_ABI_FP_number_model].i != 0)
 	{
+	  bfd *hasbfd, *hasnotbfd;
+	  
+	  if (in_attr[Tag_ABI_VFP_args].i)
+	    {
+	      hasbfd = ibfd;
+	      hasnotbfd = obfd;
+	    }
+	  else
+	    {
+	      hasbfd = obfd;
+	      hasnotbfd = ibfd;
+	    }
+
 	  _bfd_error_handler
 	    (_("ERROR: %B uses VFP register arguments, %B does not"),
-	     ibfd, obfd);
+		hasbfd, hasnotbfd);
 	  return FALSE;
 	}
     }
 
   for (i = 4; i < NUM_KNOWN_OBJ_ATTRIBUTES; i++)
     {
+      if (out_attr[i].type == 0)
+        out_attr[i].type = in_attr[i].type;
+
       /* Merge this attribute with existing attributes.  */
       switch (i)
 	{
@@ -6815,6 +6851,8 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, bfd *obfd)
 	case Tag_ABI_FP_number_model:
 	case Tag_ABI_align8_preserved:
 	case Tag_ABI_HardFP_use:
+	case Tag_CPU_unaligned_access:
+	case Tag_FP_HP_extension:
 	  /* Use the largest value specified.  */
 	  if (in_attr[i].i > out_attr[i].i)
 	    out_attr[i].i = in_attr[i].i;
@@ -6931,7 +6969,9 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, bfd *obfd)
 	    }
 	  break;
 	default: /* All known attributes should be explicitly covered.   */
-	  abort ();
+	  /* XXX Not now */
+	  /* abort (); */
+	  break;
 	}
     }
 
@@ -6945,7 +6985,8 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, bfd *obfd)
 
   for (; in_list; in_list = in_list->next)
     {
-      if ((in_list->tag & 128) < 64)
+      if ((in_list->tag & 128) < 64
+          && in_list->tag != Tag_Virtualization_use)
 	{
 	  _bfd_error_handler
 	    (_("Warning: %B: Unknown EABI object attribute %d"),
@@ -7679,12 +7720,26 @@ elf32_arm_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		   refers to is in a different object.  We can't tell for
 		   sure yet, because something later might force the
 		   symbol local.  */
-		if (r_type != R_ARM_ABS32
-                    && r_type != R_ARM_REL32
-                    && r_type != R_ARM_ABS32_NOI
-                    && r_type != R_ARM_REL32_NOI
-                    && r_type != R_ARM_ABS12)
-		  h->needs_plt = 1;
+		switch (r_type)
+		  {
+		    case R_ARM_ABS12:
+		    case R_ARM_ABS32:
+		    case R_ARM_ABS32_NOI:
+		    case R_ARM_REL32:
+		    case R_ARM_REL32_NOI:
+		    case R_ARM_MOVW_ABS_NC:
+		    case R_ARM_MOVT_ABS:
+		    case R_ARM_MOVW_PREL_NC:
+		    case R_ARM_MOVT_PREL:
+		    case R_ARM_THM_MOVW_ABS_NC:
+		    case R_ARM_THM_MOVT_ABS:
+		    case R_ARM_THM_MOVW_PREL_NC:
+		    case R_ARM_THM_MOVT_PREL:
+		      break;
+		    default:
+		      h->needs_plt = 1;
+		      break;
+		  }
 
 		/* If we create a PLT entry, this relocation will reference
 		   it, even if it's an ABS32 relocation.  */
@@ -9323,7 +9378,7 @@ elf32_arm_post_process_headers (bfd * abfd, struct bfd_link_info * link_info ATT
   i_ehdrp = elf_elfheader (abfd);
 
   if (EF_ARM_EABI_VERSION (i_ehdrp->e_flags) == EF_ARM_EABI_UNKNOWN)
-    i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_ARM;
+    i_ehdrp->e_ident[EI_OSABI] = ARM_ELF_OS_ABI_VERSION;
   else
     i_ehdrp->e_ident[EI_OSABI] = 0;
   i_ehdrp->e_ident[EI_ABIVERSION] = ARM_ELF_ABI_VERSION;
@@ -9334,6 +9389,16 @@ elf32_arm_post_process_headers (bfd * abfd, struct bfd_link_info * link_info ATT
       if (globals->byteswap_code)
 	i_ehdrp->e_flags |= EF_ARM_BE8;
     }
+
+  /*
+   * For EABI 5, we have to tag dynamic binaries and execs as either
+   * soft float or hard float.
+   */
+  if (EF_ARM_EABI_VERSION (i_ehdrp->e_flags) == EF_ARM_EABI_VER5 &&
+      (i_ehdrp->e_type == ET_DYN || i_ehdrp->e_type == ET_EXEC))
+    i_ehdrp->e_flags |=
+      bfd_elf_get_obj_attr_int (abfd, OBJ_ATTR_PROC, Tag_ABI_VFP_args) ?
+      EF_ARM_VFP_FLOAT : EF_ARM_SOFT_FLOAT;
 }
 
 static enum elf_reloc_type_class

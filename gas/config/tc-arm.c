@@ -651,6 +651,7 @@ struct asm_opcode
 
 #define BAD_ARGS	_("bad arguments to instruction")
 #define BAD_PC		_("r15 not allowed here")
+#define BAD_SP		_("r13 not allowed here")
 #define BAD_COND	_("instruction cannot be conditional")
 #define BAD_OVERLAP	_("registers may not be the same")
 #define BAD_HIREG	_("lo register required")
@@ -659,6 +660,7 @@ struct asm_opcode
 #define BAD_BRANCH	_("branch must be last instruction in IT block")
 #define BAD_NOT_IT	_("instruction not allowed in IT block")
 #define BAD_FPU		_("selected FPU does not support instruction")
+#define BAD_VMRS	_("APSR_nzcv may only be used with fpscr")
 
 static struct hash_control *arm_ops_hsh;
 static struct hash_control *arm_cond_hsh;
@@ -3079,6 +3081,7 @@ s_arm_unwind_fnend (int ignored ATTRIBUTE_UNUSED)
   record_alignment (now_seg, 2);
 
   ptr = frag_more (8);
+  memset(ptr, 0, 8);
   where = frag_now_fix () - 8;
 
   /* Self relative offset of the function start.  */
@@ -3834,6 +3837,7 @@ s_arm_eabi_attribute (int ignored ATTRIBUTE_UNUSED)
 #endif /* OBJ_ELF */
 
 static void s_arm_arch (int);
+static void s_arm_arch_extension (int);
 static void s_arm_object_arch (int);
 static void s_arm_cpu (int);
 static void s_arm_fpu (int);
@@ -3888,6 +3892,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "syntax",	   s_syntax,	  0 },
   { "cpu",	   s_arm_cpu,	  0 },
   { "arch",	   s_arm_arch,	  0 },
+  { "arch_extension",	   s_arm_arch_extension,	  0 },
   { "object_arch", s_arm_object_arch,	0 },
   { "fpu",	   s_arm_fpu,	  0 },
 #ifdef OBJ_ELF
@@ -4683,6 +4688,23 @@ parse_address_main (char **str, int i, int group_relocations,
 	      return PARSE_OPERAND_FAIL;
 	}
     }
+  else if (skip_past_char (&p, ':') == SUCCESS)
+    {
+      /* FIXME: '@' should be used here, but it's filtered out by generic
+         code before we get to see it here. This may be subject to
+         change.  */
+      expressionS exp;
+      my_get_expression (&exp, &p, GE_NO_PREFIX);
+      if (exp.X_op != O_constant)
+        {
+          inst.error = _("alignment must be constant");
+          return PARSE_OPERAND_FAIL;
+        }
+      inst.operands[i].imm = exp.X_add_number << 8;
+      inst.operands[i].immisalign = 1;
+      /* Alignments are not pre-indexes.  */
+      inst.operands[i].preind = 0;
+    }
 
   if (skip_past_char (&p, ']') == FAIL)
     {
@@ -5163,10 +5185,6 @@ parse_neon_mov (char **str, int *which_operand)
              Case 10: VMOV.F32 <Sd>, #<imm>
              Case 11: VMOV.F64 <Dd>, #<imm>  */
         inst.operands[i].immisfloat = 1;
-      else if (parse_big_immediate (&ptr, i) == SUCCESS)
-          /* Case 2: VMOV<c><q>.<dt> <Qd>, #<imm>
-             Case 3: VMOV<c><q>.<dt> <Dd>, #<imm>  */
-        ;
       else if ((val = arm_typed_reg_parse (&ptr, REG_TYPE_NSDQ, &rtype,
                                            &optype)) != FAIL)
         {
@@ -5206,6 +5224,10 @@ parse_neon_mov (char **str, int *which_operand)
               inst.operands[i++].present = 1;
             }
         }
+      else if (parse_big_immediate (&ptr, i) == SUCCESS)
+          /* Case 2: VMOV<c><q>.<dt> <Qd>, #<imm>
+             Case 3: VMOV<c><q>.<dt> <Dd>, #<imm>  */
+        ;
       else
         {
           first_error (_("expected <Rm> or <Dm> or <Qm> operand"));
@@ -6057,7 +6079,7 @@ parse_operands (char *str, const unsigned char *pattern)
 
 /* Functions for operand encoding.  ARM, then Thumb.  */
 
-#define rotate_left(v, n) (v << n | v >> (32 - n))
+#define rotate_left(v, n) (v << (n % 32) | v >> ((32 - n) % 32))
 
 /* If VAL can be encoded in the immediate field of an ARM instruction,
    return the encoded form.  Otherwise, return FAIL.  */
@@ -6566,6 +6588,7 @@ do_barrier (void)
   if (inst.operands[0].present)
     {
       constraint ((inst.instruction & 0xf0) != 0x40
+		  && (inst.instruction & 0xf0) != 0x50
 		  && inst.operands[0].imm != 0xf,
 		  "bad barrier type");
       inst.instruction |= inst.operands[0].imm;
@@ -6766,7 +6789,11 @@ do_co_reg (void)
 {
   inst.instruction |= inst.operands[0].reg << 8;
   inst.instruction |= inst.operands[1].imm << 21;
-  inst.instruction |= inst.operands[2].reg << 12;
+  /* If this is a vector we are using the APSR_nzcv syntax, encode as r15 */
+  if (inst.operands[2].isvec != 0)
+    inst.instruction |= 15 << 12;
+  else
+    inst.instruction |= inst.operands[2].reg << 12;
   inst.instruction |= inst.operands[3].reg << 16;
   inst.instruction |= inst.operands[4].reg;
   inst.instruction |= inst.operands[5].imm << 5;
@@ -7095,6 +7122,64 @@ do_vfp_nsyn_msr (void)
 }
 
 static void
+do_vfp_vmrs (void)
+{
+  int rt;
+
+  /* The destination register can be r0-r14 or APSR_nzcv */
+  if (inst.operands[0].reg > 14)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* If the destination is r13 and not in ARM mode then unprefictable */
+  if (thumb_mode && inst.operands[0].reg == REG_SP)
+    {
+      inst.error = BAD_SP;
+      return;
+    }
+
+  /* If the destination is APSR_nzcv */
+  if (inst.operands[0].isvec && inst.operands[1].reg != 1)
+    {
+      inst.error = BAD_VMRS;
+      return;
+    }
+
+  if (inst.operands[0].isvec)
+    rt = 15;
+  else
+    rt = inst.operands[0].reg;
+
+  /* Or in the registers to use */
+  inst.instruction |= rt << 12;
+  inst.instruction |= inst.operands[1].reg << 16;
+}
+
+static void
+do_vfp_vmsr (void)
+{
+  /* The destination register can be r0-r14 or APSR_nzcv */
+  if (inst.operands[1].reg > 14)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* If the destination is r13 and not in ARM mode then unprefictable */
+  if (thumb_mode && inst.operands[0].reg == REG_SP)
+    {
+      inst.error = BAD_SP;
+      return;
+    }
+
+  /* Or in the registers to use */
+  inst.instruction |= inst.operands[1].reg << 12;
+  inst.instruction |= inst.operands[0].reg << 16;
+}
+
+static void
 do_mrs (void)
 {
   if (do_vfp_nsyn_mrs () == SUCCESS)
@@ -7157,10 +7242,11 @@ do_mull (void)
   inst.instruction |= inst.operands[2].reg;
   inst.instruction |= inst.operands[3].reg << 8;
 
-  /* rdhi, rdlo and rm must all be different.  */
+  /* rdhi, rdlo and rm must all be different prior to ARMv6.  */
   if (inst.operands[0].reg == inst.operands[1].reg
-      || inst.operands[0].reg == inst.operands[2].reg
+      || ((inst.operands[0].reg == inst.operands[2].reg
       || inst.operands[1].reg == inst.operands[2].reg)
+      && !ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v6)))
     as_tsktsk (_("rdhi, rdlo and rm must all be different"));
 }
 
@@ -9974,6 +10060,13 @@ do_t_rbit (void)
 }
 
 static void
+do_t_rd_rm (void)
+{
+  inst.instruction |= inst.operands[0].reg << 8;
+  inst.instruction |= inst.operands[1].reg;
+}
+
+static void
 do_t_rev (void)
 {
   if (inst.operands[0].reg <= 7 && inst.operands[1].reg <= 7
@@ -12591,14 +12684,14 @@ do_vfp_nsyn_cvt (enum neon_shape rs, int flavour)
       /* Conversions without bitshift.  */
       const char *enc[] =
         {
-          "ftosis",
-          "ftouis",
+          "ftosizs",
+          "ftouizs",
           "fsitos",
           "fuitos",
           "fcvtsd",
           "fcvtds",
-          "ftosid",
-          "ftouid",
+          "ftosizd",
+          "ftouizd",
           "fsitod",
           "fuitod"
         };
@@ -14623,10 +14716,18 @@ static const struct asm_cond conds[] =
 
 static struct asm_barrier_opt barrier_opt_names[] =
 {
-  { "sy",   0xf },
-  { "un",   0x7 },
-  { "st",   0xe },
-  { "unst", 0x6 }
+  { "sy",    0xf },
+  { "un",    0x7 },
+  { "st",    0xe },
+  { "unst",  0x6 },
+  { "ish",   0xb },
+  { "sh",    0xb },
+  { "ishst", 0xa },
+  { "shst",  0xa },
+  { "nsh",   0x7 },
+  { "nshst", 0x6 },
+  { "osh",   0x3 },
+  { "oshst", 0x2 }
 };
 
 /* Table of ARM-format instructions.	*/
@@ -14901,6 +15002,9 @@ static const struct asm_opcode insns[] =
  TCE(rsb,	0600000, ebc00000, 3, (RR, oRR, SH), arit, t_rsb),
  TC3(rsbs,	0700000, ebd00000, 3, (RR, oRR, SH), arit, t_rsb),
 
+ TCE(rrx,      1a00060, ea4f0030, 2, (RR, RR),      rd_rm, t_rd_rm),
+ TCE(rrxs,     1b00060, ea5f0030, 2, (RR, RR),      rd_rm, t_rd_rm),
+
 #undef THUMB_VARIANT
 #define THUMB_VARIANT &arm_ext_v6
  TCE(cpy,       1a00000, 4600,     2, (RR, RR),      rd_rm, t_cpy),
@@ -14955,7 +15059,7 @@ static const struct asm_opcode insns[] =
  TCE(stc,	c000000, ec000000, 3, (RCP, RCN, ADDRGLDC),	        lstc,   lstc),
  TC3(stcl,	c400000, ec400000, 3, (RCP, RCN, ADDRGLDC),	        lstc,   lstc),
  TCE(mcr,	e000010, ee000010, 6, (RCP, I7b, RR, RCN, RCN, oI7b),   co_reg, co_reg),
- TCE(mrc,	e100010, ee100010, 6, (RCP, I7b, RR, RCN, RCN, oI7b),   co_reg, co_reg),
+ TCE(mrc,	e100010, ee100010, 6, (RCP, I7b, APSR_RR, RCN, RCN, oI7b),   co_reg, co_reg),
 
 #undef ARM_VARIANT
 #define ARM_VARIANT &arm_ext_v2s /* ARM 3 - swp instructions.  */
@@ -15014,7 +15118,7 @@ static const struct asm_opcode insns[] =
  TUF(stc2l,	c400000, fc400000, 3, (RCP, RCN, ADDRGLDC),		        lstc,	lstc),
  TUF(cdp2,	e000000, fe000000, 6, (RCP, I15b, RCN, RCN, RCN, oI7b), cdp,    cdp),
  TUF(mcr2,	e000010, fe000010, 6, (RCP, I7b, RR, RCN, RCN, oI7b),   co_reg, co_reg),
- TUF(mrc2,	e100010, fe100010, 6, (RCP, I7b, RR, RCN, RCN, oI7b),   co_reg, co_reg),
+ TUF(mrc2,	e100010, fe100010, 6, (RCP, I7b, APSR_RR, RCN, RCN, oI7b),   co_reg, co_reg),
 
 #undef ARM_VARIANT
 #define ARM_VARIANT &arm_ext_v5exp /*  ARM Architecture 5TExP.  */
@@ -15715,6 +15819,8 @@ static const struct asm_opcode insns[] =
  cCE(ftouizs,	ebc0ac0, 2, (RVS, RVS),	      vfp_sp_monadic),
  cCE(fmrx,	ef00a10, 2, (RR, RVC),	      rd_rn),
  cCE(fmxr,	ee00a10, 2, (RVC, RR),	      rn_rd),
+ cCE(vmrs,	ef00a10, 2, (APSR_RR, RVC),   vfp_vmrs),
+ cCE(vmsr,	ee00a10, 2, (RVC, RR),        vfp_vmsr),
 
   /* Memory operations.	 */
  cCE(flds,	d100a00, 2, (RVS, ADDRGLDC),  vfp_sp_ldst),
@@ -17340,6 +17446,7 @@ create_unwind_entry (int have_data)
 
   /* Allocate the table entry.	*/
   ptr = frag_more ((size << 2) + 4);
+  memset(ptr, 0, (size << 2) + 4);
   where = frag_now_fix () - ((size << 2) + 4);
 
   switch (unwind.personality_index)
@@ -18753,7 +18860,7 @@ md_apply_fix (fixS *	fixP,
          if (encoded_addend == (unsigned int) FAIL)
 	   as_bad_where (fixP->fx_file, fixP->fx_line,
 	                 _("the offset 0x%08lX is not representable"),
-                         addend_abs);
+                         (unsigned long) addend_abs);
 
          /* Extract the instruction.  */
          insn = md_chars_to_number (buf, INSN_SIZE);
@@ -18793,7 +18900,7 @@ md_apply_fix (fixS *	fixP,
           if (addend_abs >= 0x1000)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 	  	          _("bad offset 0x%08lX (only 12 bits available for the magnitude)"),
-                          addend_abs);
+                          (unsigned long) addend_abs);
 
           /* Extract the instruction.  */
           insn = md_chars_to_number (buf, INSN_SIZE);
@@ -18832,7 +18939,7 @@ md_apply_fix (fixS *	fixP,
           if (addend_abs >= 0x100)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 	  	          _("bad offset 0x%08lX (only 8 bits available for the magnitude)"),
-                          addend_abs);
+                          (unsigned long) addend_abs);
 
           /* Extract the instruction.  */
           insn = md_chars_to_number (buf, INSN_SIZE);
@@ -18872,12 +18979,12 @@ md_apply_fix (fixS *	fixP,
           if (addend_abs & 0x3)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 	  	          _("bad offset 0x%08lX (must be word-aligned)"),
-                          addend_abs);
+                          (unsigned long) addend_abs);
 
           if ((addend_abs >> 2) > 0xff)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 	  	          _("bad offset 0x%08lX (must be an 8-bit number of words)"),
-                          addend_abs);
+                          (unsigned long) addend_abs);
 
           /* Extract the instruction.  */
           insn = md_chars_to_number (buf, INSN_SIZE);
@@ -19290,6 +19397,12 @@ arm_fix_adjustable (fixS * fixP)
   if ((fixP->fx_r_type >= BFD_RELOC_ARM_ALU_PC_G0_NC
        && fixP->fx_r_type <= BFD_RELOC_ARM_LDC_SB_G2)
       || fixP->fx_r_type == BFD_RELOC_ARM_LDR_PC_G0)
+    return 0;
+
+  if (fixP->fx_r_type == BFD_RELOC_ARM_MOVW
+      || fixP->fx_r_type == BFD_RELOC_ARM_MOVT
+      || fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVW
+      || fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVT)
     return 0;
 
   return 1;
@@ -19998,6 +20111,9 @@ static const struct arm_cpu_option_table arm_cpus[] =
   {"cortex-a8",		ARM_ARCH_V7A,	 ARM_FEATURE(0, FPU_VFP_V3
                                                         | FPU_NEON_EXT_V1),
                                                           NULL},
+  {"cortex-a9",		ARM_ARCH_V7A,	 ARM_FEATURE(0, FPU_VFP_V3
+                                                        | FPU_NEON_EXT_V1),
+                                                          NULL},
   {"cortex-r4",		ARM_ARCH_V7R,	 FPU_NONE,	  NULL},
   {"cortex-m3",		ARM_ARCH_V7M,	 FPU_NONE,	  NULL},
   /* ??? XSCALE is really an architecture.  */
@@ -20076,6 +20192,7 @@ static const struct arm_option_cpu_value_table arm_extensions[] =
   {"xscale",		ARM_FEATURE (0, ARM_CEXT_XSCALE)},
   {"iwmmxt",		ARM_FEATURE (0, ARM_CEXT_IWMMXT)},
   {"iwmmxt2",		ARM_FEATURE (0, ARM_CEXT_IWMMXT2)},
+  {"sec",		ARM_FEATURE (ARM_EXT_V6Z, 0)},
   {NULL,		ARM_ARCH_NONE}
 };
 
@@ -20094,8 +20211,10 @@ static const struct arm_option_cpu_value_table arm_fpus[] =
   {"softvfp",		FPU_ARCH_VFP},
   {"softvfp+vfp",	FPU_ARCH_VFP_V2},
   {"vfp",		FPU_ARCH_VFP_V2},
+  {"vfpv2",		FPU_ARCH_VFP_V2},
   {"vfp9",		FPU_ARCH_VFP_V2},
   {"vfp3",              FPU_ARCH_VFP_V3},
+  {"vfpv3",             FPU_ARCH_VFP_V3},
   {"vfp10",		FPU_ARCH_VFP_V2},
   {"vfp10-r0",		FPU_ARCH_VFP_V1},
   {"vfpxd",		FPU_ARCH_VFP_V1xD},
@@ -20257,7 +20376,7 @@ arm_parse_arch (char * str)
     }
 
   for (opt = arm_archs; opt->name != NULL; opt++)
-    if (streq (opt->name, str))
+    if (strncmp (opt->name, str, optlen) == 0)
       {
 	march_cpu_opt = &opt->value;
 	march_fpu_opt = &opt->default_fpu;
@@ -20658,6 +20777,34 @@ s_arm_arch (int ignored ATTRIBUTE_UNUSED)
   ignore_rest_of_line ();
 }
 
+/* Parse a .arch_extension directive.  */
+
+static void
+s_arm_arch_extension (int ignored ATTRIBUTE_UNUSED)
+{
+  const struct arm_option_cpu_value_table *opt;
+  char saved_char;
+  char *name;
+
+  name = input_line_pointer;
+  while (*input_line_pointer && !ISSPACE(*input_line_pointer))
+    input_line_pointer++;
+  saved_char = *input_line_pointer;
+  *input_line_pointer = 0;
+
+  for (opt = arm_extensions; opt->name != NULL; opt++)
+    if (streq (opt->name, name))
+      {
+	ARM_MERGE_FEATURE_SETS (cpu_variant, cpu_variant, opt->value);
+	*input_line_pointer = saved_char;
+	demand_empty_rest_of_line ();
+	return;
+      }
+
+  as_bad (_("unknown architecture `%s'\n"), name);
+  *input_line_pointer = saved_char;
+  ignore_rest_of_line ();
+}
 
 /* Parse a .object_arch directive.  */
 

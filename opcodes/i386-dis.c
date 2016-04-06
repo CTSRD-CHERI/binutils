@@ -85,6 +85,7 @@ static void OP_MS (int, int);
 static void OP_XS (int, int);
 static void OP_M (int, int);
 static void OP_VMX (int, int);
+static void OP_VMX2 (int, int);
 static void OP_0fae (int, int);
 static void OP_0f07 (int, int);
 static void NOP_Fixup1 (int, int);
@@ -93,6 +94,7 @@ static void OP_3DNowSuffix (int, int);
 static void OP_SIMD_Suffix (int, int);
 static void SIMD_Fixup (int, int);
 static void PNI_Fixup (int, int);
+static void XCR_Fixup (int, int);
 static void SVME_Fixup (int, int);
 static void INVLPG_Fixup (int, int);
 static void BadOp (void);
@@ -212,6 +214,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define Ew { OP_E, w_mode }
 #define M { OP_M, 0 }		/* lea, lgdt, etc. */
 #define Ma { OP_M, v_mode }
+#define Mo { OP_M, o_mode }
 #define Mp { OP_M, f_mode }		/* 32 or 48 bit memory operand for LDS, LES etc */
 #define Mq { OP_M, q_mode }
 #define Gb { OP_G, b_mode }
@@ -316,6 +319,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define EMC { OP_EMC, v_mode }
 #define MXC { OP_MXC, 0 }
 #define VM { OP_VMX, q_mode }
+#define VM2 { OP_VMX2, q_mode }
 #define OPSUF { OP_3DNowSuffix, 0 }
 #define OPSIMD { OP_SIMD_Suffix, 0 }
 #define XMM0 { XMM_Fixup, 0 }
@@ -539,6 +543,16 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define PREGRP95  NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 95 } }
 #define PREGRP96  NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 96 } }
 #define PREGRP97  NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 97 } }
+#define PREGRP98  NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 98 } }
+#define PREGRP99  NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 99 } }
+#define PREGRP100 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 100 } }
+#define PREGRP101 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 101 } }
+#define PREGRP102 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 102 } }
+#define PREGRP103 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 103 } }
+#define PREGRP104 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 104 } }
+#define PREGRP105 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 105 } }
+#define PREGRP106 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 106 } }
+#define PREGRP107 NULL, { { NULL, USE_PREFIX_USER_TABLE }, { NULL, 107 } }
 
 
 #define X86_64_0  NULL, { { NULL, X86_64_SPECIAL }, { NULL, 0 } }
@@ -1315,7 +1329,7 @@ static const unsigned char threebyte_0x38_uses_DATA_prefix[256] = {
   /* a0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* af */
   /* b0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* bf */
   /* c0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* cf */
-  /* d0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* df */
+  /* d0 */ 0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1, /* df */
   /* e0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* ef */
   /* f0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* ff */
   /*       -------------------------------        */
@@ -1378,7 +1392,7 @@ static const unsigned char threebyte_0x3a_uses_DATA_prefix[256] = {
   /* 10 */ 0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0, /* 1f */
   /* 20 */ 1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 2f */
   /* 30 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 3f */
-  /* 40 */ 1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 4f */
+  /* 40 */ 1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0, /* 4f */
   /* 50 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 5f */
   /* 60 */ 1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0, /* 6f */
   /* 70 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 7f */
@@ -1387,7 +1401,7 @@ static const unsigned char threebyte_0x3a_uses_DATA_prefix[256] = {
   /* a0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* af */
   /* b0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* bf */
   /* c0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* cf */
-  /* d0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* df */
+  /* d0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1, /* df */
   /* e0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* ef */
   /* f0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* ff */
   /*       -------------------------------        */
@@ -1693,7 +1707,7 @@ static const struct dis386 grps[][8] = {
   {
     { "sgdt{Q|IQ||}", { { VMX_Fixup, 0 } } },
     { "sidt{Q|IQ||}", { { PNI_Fixup, 0 } } },
-    { "lgdt{Q|Q||}",	 { M } },
+    { "lgdt{Q|Q||}",	 { { XCR_Fixup, 0 }  } },
     { "lidt{Q|Q||}",	 { { SVME_Fixup, 0 } } },
     { "smswD",	{ Sv } },
     { "(bad)",	{ XX } },
@@ -1720,7 +1734,7 @@ static const struct dis386 grps[][8] = {
     { "(bad)",	{ XX } },
     { "(bad)",	{ XX } },
     { "",	{ VM } },		/* See OP_VMX.  */
-    { "vmptrst", { Mq } },
+    { "",	{ VM2 } },		/* See OP_VMX2.  */
   },
   /* GRP11_C6 */
   {
@@ -1783,9 +1797,9 @@ static const struct dis386 grps[][8] = {
     { "fxrstor",	{ Ev } },
     { "ldmxcsr",	{ Ev } },
     { "stmxcsr",	{ Ev } },
-    { "(bad)",		{ XX } },
-    { "lfence",		{ { OP_0fae, 0 } } },
-    { "mfence",		{ { OP_0fae, 0 } } },
+    { "xsave",		{ Ev } },
+    { "xrstor",		{ { OP_0fae, v_mode } } },
+    { "xsaveopt",	{ { OP_0fae, v_mode } } },
     { "clflush",	{ { OP_0fae, 0 } } },
   },
   /* GRP16 */
@@ -2585,6 +2599,86 @@ static const struct dis386 prefix_user_table[][4] = {
     { "punpckldq",{ MX, EMq } },
     { "(bad)",	{ XX } },
   },
+
+  /* PREGRP98 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "invept",	{ Gm, Mo } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP99 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "invvpid",{ Gm, Mo } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP100 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "aesimc", { XM, EXx } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP101 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "aesenc",{ XM, EXx } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP102 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "aesenclast", { XM, EXx } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP103 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "aesdec", { XM, EXx } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP104 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "aesdeclast", { XM, EXx } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP105 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "aeskeygenassist", { XM, EXx, Ib } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP106 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "pclmulqdq", { XM, EXx, Ib } },
+    { "(bad)",	{ XX } },
+  },
+
+  /* PREGRP107 */
+  {
+    { "(bad)",	{ XX } },
+    { "(bad)",	{ XX } },
+    { "invpcid",{ Gm, Mo } },
+    { "(bad)",	{ XX } },
+  },
 };
 
 static const struct dis386 x86_64_table[][2] = {
@@ -2754,9 +2848,9 @@ static const struct dis386 three_byte_table[][256] = {
     { "(bad)", { XX } },
     { "(bad)", { XX } },
     /* 80 */
-    { "(bad)", { XX } },
-    { "(bad)", { XX } },
-    { "(bad)", { XX } },
+    { PREGRP98 },
+    { PREGRP99 },
+    { PREGRP107 },
     { "(bad)", { XX } },
     { "(bad)", { XX } },
     { "(bad)", { XX } },
@@ -2856,11 +2950,11 @@ static const struct dis386 three_byte_table[][256] = {
     { "(bad)", { XX } },
     { "(bad)", { XX } },
     { "(bad)", { XX } },
-    { "(bad)", { XX } },
-    { "(bad)", { XX } },
-    { "(bad)", { XX } },
-    { "(bad)", { XX } },
-    { "(bad)", { XX } },
+    { PREGRP100 },
+    { PREGRP101 },
+    { PREGRP102 },
+    { PREGRP103 },
+    { PREGRP104 },
     /* e0 */
     { "(bad)", { XX } },
     { "(bad)", { XX } },
@@ -2977,7 +3071,7 @@ static const struct dis386 three_byte_table[][256] = {
     { PREGRP84 },
     { PREGRP85 },
     { "(bad)", { XX } },
-    { "(bad)", { XX } },
+    { PREGRP106 },
     { "(bad)", { XX } },
     { "(bad)", { XX } },
     { "(bad)", { XX } },
@@ -3151,7 +3245,7 @@ static const struct dis386 three_byte_table[][256] = {
     { "(bad)", { XX } },
     { "(bad)", { XX } },
     { "(bad)", { XX } },
-    { "(bad)", { XX } },
+    { PREGRP105 },
     /* e0 */
     { "(bad)", { XX } },
     { "(bad)", { XX } },
@@ -3203,7 +3297,7 @@ ckprefix (void)
   rex_used = 0;
   while (1)
     {
-      FETCH_DATA (the_info, codep + 1);
+      (void) FETCH_DATA (the_info, codep + 1);
       newrex = 0;
       switch (*codep)
 	{
@@ -3382,7 +3476,7 @@ static bfd_vma start_pc;
  * The function returns the length of this instruction in bytes.
  */
 
-static char intel_syntax;
+static int intel_syntax;
 static char open_char;
 static char close_char;
 static char separator_char;
@@ -3455,7 +3549,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
   else
     address_mode = mode_32bit;
 
-  if (intel_syntax == (char) -1)
+  if (intel_syntax == -1)
     intel_syntax = (info->mach == bfd_mach_i386_i386_intel_syntax
 		    || info->mach == bfd_mach_x86_64_intel_syntax);
 
@@ -3606,7 +3700,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
   insn_codep = codep;
   sizeflag = priv.orig_sizeflag;
 
-  FETCH_DATA (info, codep + 1);
+  (void) FETCH_DATA (info, codep + 1);
   two_source_ops = (*codep == 0x62) || (*codep == 0xc8);
 
   if (((prefixes & PREFIX_FWAIT)
@@ -3628,7 +3722,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
   if (*codep == 0x0f)
     {
       unsigned char threebyte;
-      FETCH_DATA (info, codep + 2);
+      (void) FETCH_DATA (info, codep + 2);
       threebyte = *++codep;
       dp = &dis386_twobyte[threebyte];
       need_modrm = twobyte_has_modrm[*codep];
@@ -3639,7 +3733,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
       codep++;
       if (dp->name == NULL && dp->op[0].bytemode == IS_3BYTE_OPCODE)
 	{
-	  FETCH_DATA (info, codep + 2);
+	  (void) FETCH_DATA (info, codep + 2);
 	  op = *codep++;
 	  switch (threebyte)
 	    {
@@ -3724,7 +3818,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
     }
   else if (need_modrm)
     {
-      FETCH_DATA (info, codep + 1);
+      (void) FETCH_DATA (info, codep + 1);
       modrm.mod = (*codep >> 6) & 3;
       modrm.reg = (*codep >> 3) & 7;
       modrm.rm = *codep & 7;
@@ -4234,7 +4328,7 @@ dofloat (int sizeflag)
 static void
 OP_ST (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
-  oappend ("%st" + intel_syntax);
+  oappend (&"%st"[intel_syntax]);
 }
 
 static void
@@ -4585,32 +4679,32 @@ append_seg (void)
   if (prefixes & PREFIX_CS)
     {
       used_prefixes |= PREFIX_CS;
-      oappend ("%cs:" + intel_syntax);
+      oappend (&"%cs:"[intel_syntax]);
     }
   if (prefixes & PREFIX_DS)
     {
       used_prefixes |= PREFIX_DS;
-      oappend ("%ds:" + intel_syntax);
+      oappend (&"%ds:"[intel_syntax]);
     }
   if (prefixes & PREFIX_SS)
     {
       used_prefixes |= PREFIX_SS;
-      oappend ("%ss:" + intel_syntax);
+      oappend (&"%ss:"[intel_syntax]);
     }
   if (prefixes & PREFIX_ES)
     {
       used_prefixes |= PREFIX_ES;
-      oappend ("%es:" + intel_syntax);
+      oappend (&"%es:"[intel_syntax]);
     }
   if (prefixes & PREFIX_FS)
     {
       used_prefixes |= PREFIX_FS;
-      oappend ("%fs:" + intel_syntax);
+      oappend (&"%fs:"[intel_syntax]);
     }
   if (prefixes & PREFIX_GS)
     {
       used_prefixes |= PREFIX_GS;
-      oappend ("%gs:" + intel_syntax);
+      oappend (&"%gs:"[intel_syntax]);
     }
 }
 
@@ -4890,7 +4984,7 @@ OP_E (int bytemode, int sizeflag)
       if (base == 4)
 	{
 	  havesib = 1;
-	  FETCH_DATA (the_info, codep + 1);
+	  (void) FETCH_DATA (the_info, codep + 1);
 	  index = (*codep >> 3) & 7;
 	  if (address_mode == mode_64bit || index != 0x4)
 	    /* When INDEX == 0x4 in 32 bit mode, SCALE is ignored.  */
@@ -5147,7 +5241,7 @@ get64 (void)
   unsigned int a;
   unsigned int b;
 
-  FETCH_DATA (the_info, codep + 8);
+  (void) FETCH_DATA (the_info, codep + 8);
   a = *codep++ & 0xff;
   a |= (*codep++ & 0xff) << 8;
   a |= (*codep++ & 0xff) << 16;
@@ -5169,7 +5263,7 @@ get32 (void)
 {
   bfd_signed_vma x = 0;
 
-  FETCH_DATA (the_info, codep + 4);
+  (void) FETCH_DATA (the_info, codep + 4);
   x = *codep++ & (bfd_signed_vma) 0xff;
   x |= (*codep++ & (bfd_signed_vma) 0xff) << 8;
   x |= (*codep++ & (bfd_signed_vma) 0xff) << 16;
@@ -5182,7 +5276,7 @@ get32s (void)
 {
   bfd_signed_vma x = 0;
 
-  FETCH_DATA (the_info, codep + 4);
+  (void) FETCH_DATA (the_info, codep + 4);
   x = *codep++ & (bfd_signed_vma) 0xff;
   x |= (*codep++ & (bfd_signed_vma) 0xff) << 8;
   x |= (*codep++ & (bfd_signed_vma) 0xff) << 16;
@@ -5198,7 +5292,7 @@ get16 (void)
 {
   int x = 0;
 
-  FETCH_DATA (the_info, codep + 2);
+  (void) FETCH_DATA (the_info, codep + 2);
   x = *codep++ & 0xff;
   x |= (*codep++ & 0xff) << 8;
   return x;
@@ -5382,7 +5476,7 @@ OP_I (int bytemode, int sizeflag)
   op &= mask;
   scratchbuf[0] = '$';
   print_operand_value (scratchbuf + 1, 1, op);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
   scratchbuf[0] = '\0';
 }
 
@@ -5433,7 +5527,7 @@ OP_I64 (int bytemode, int sizeflag)
   op &= mask;
   scratchbuf[0] = '$';
   print_operand_value (scratchbuf + 1, 1, op);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
   scratchbuf[0] = '\0';
 }
 
@@ -5483,7 +5577,7 @@ OP_sI (int bytemode, int sizeflag)
 
   scratchbuf[0] = '$';
   print_operand_value (scratchbuf + 1, 1, op);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5663,7 +5757,7 @@ OP_ESreg (int code, int sizeflag)
 	  intel_operand_size (b_mode, sizeflag);
 	}
     }
-  oappend ("%es:" + intel_syntax);
+  oappend (&"%es:"[intel_syntax]);
   ptr_reg (code, sizeflag);
 }
 
@@ -5713,7 +5807,7 @@ OP_C (int dummy ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
       add = 8;
     }
   sprintf (scratchbuf, "%%cr%d", modrm.reg + add);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5734,7 +5828,7 @@ static void
 OP_T (int dummy ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   sprintf (scratchbuf, "%%tr%d", modrm.reg);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5760,7 +5854,7 @@ OP_MMX (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
     }
   else
     sprintf (scratchbuf, "%%mm%d", modrm.reg);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5771,7 +5865,7 @@ OP_XMM (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
   if (rex & REX_R)
     add = 8;
   sprintf (scratchbuf, "%%xmm%d", modrm.reg + add);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5803,7 +5897,7 @@ OP_EM (int bytemode, int sizeflag)
     }
   else
     sprintf (scratchbuf, "%%mm%d", modrm.rm);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 /* cvt* are the only instructions in sse2 which have
@@ -5830,7 +5924,7 @@ OP_EMC (int bytemode, int sizeflag)
   codep++;
   used_prefixes |= (prefixes & PREFIX_DATA);
   sprintf (scratchbuf, "%%mm%d", modrm.rm);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5838,7 +5932,7 @@ OP_MXC (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   used_prefixes |= (prefixes & PREFIX_DATA);
   sprintf (scratchbuf, "%%mm%d", modrm.reg);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5858,7 +5952,7 @@ OP_EX (int bytemode, int sizeflag)
   MODRM_CHECK;
   codep++;
   sprintf (scratchbuf, "%%xmm%d", modrm.rm + add);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void
@@ -5883,7 +5977,7 @@ static void
 OP_M (int bytemode, int sizeflag)
 {
   if (modrm.mod == 3)
-    /* bad bound,lea,lds,les,lfs,lgs,lss,cmpxchg8b,vmptrst modrm */
+    /* bad bound,lea,lds,les,lfs,lgs,lss,cmpxchg8b,vmptrst,invept,invvpid modrm */
     BadOp ();
   else
     OP_E (bytemode, sizeflag);
@@ -5905,17 +5999,17 @@ OP_0fae (int bytemode, int sizeflag)
     {
       if (modrm.reg == 7)
 	strcpy (obuf + strlen (obuf) - sizeof ("clflush") + 1, "sfence");
+      else if (modrm.reg == 6)
+	strcpy (obuf + strlen (obuf) - sizeof ("xsaveopt") + 1, "mfence");
+      else if (modrm.reg == 5)
+	strcpy (obuf + strlen (obuf) - sizeof ("xrstor") + 1, "lfence");
 
       if (modrm.reg < 5 || modrm.rm != 0)
 	{
 	  BadOp ();	/* bad sfence, mfence, or lfence */
 	  return;
 	}
-    }
-  else if (modrm.reg != 7)
-    {
-      BadOp ();		/* bad clflush */
-      return;
+      bytemode = 0;
     }
 
   OP_E (bytemode, sizeflag);
@@ -6018,7 +6112,7 @@ OP_3DNowSuffix (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   const char *mnemonic;
 
-  FETCH_DATA (the_info, codep + 1);
+  (void) FETCH_DATA (the_info, codep + 1);
   /* AMD 3DNow! instructions are specified by an opcode suffix in the
      place where an 8-bit immediate would normally go.  ie. the last
      byte of the instruction.  */
@@ -6054,7 +6148,7 @@ OP_SIMD_Suffix (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   unsigned int cmp_type;
 
-  FETCH_DATA (the_info, codep + 1);
+  (void) FETCH_DATA (the_info, codep + 1);
   obufp = obuf + strlen (obuf);
   cmp_type = *codep++ & 0xff;
   if (cmp_type < 8)
@@ -6165,10 +6259,57 @@ PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 
       codep++;
     }
+  else if (modrm.mod == 3 && modrm.reg == 1 && modrm.rm <= 3)
+    {
+      size_t olen = strlen (obuf);
+      char *p = obuf + olen - 4;
+      if (*codep == 0xca)
+        strcpy (p, "clac");
+      else if (*codep == 0xcb)
+        strcpy (p, "stac");
+      codep++;
+    }
   else
     OP_M (0, sizeflag);
 }
 
+static void
+XCR_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
+{
+  if (modrm.mod == 3 && modrm.reg == 2 && modrm.rm <= 1)
+    {
+      /* Override "lgdt".  */
+      size_t olen = strlen (obuf);
+      char *p = obuf + olen - 4;
+
+      /* We might have a suffix when disassembling with -Msuffix.  */
+      if (*p == 'i')
+	--p;
+
+      /* Remove "addr16/addr32" if we aren't in Intel mode.  */
+      if (!intel_syntax
+	  && (prefixes & PREFIX_ADDR)
+	  && olen >= (4 + 7)
+	  && *(p - 1) == ' '
+	  && CONST_STRNEQ (p - 7, "addr")
+	  && (CONST_STRNEQ (p - 3, "16")
+	      || CONST_STRNEQ (p - 3, "32")))
+	p -= 7;
+
+      if (modrm.rm)
+	{
+	  strcpy (p, "xsetbv");
+	}
+      else
+	{
+	  strcpy (p, "xgetbv");
+	}
+
+      codep++;
+    }
+  else
+    OP_M (0, sizeflag);
+}
 static void
 SVME_Fixup (int bytemode, int sizeflag)
 {
@@ -6309,14 +6450,37 @@ VMX_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 static void
 OP_VMX (int bytemode, int sizeflag)
 {
-  used_prefixes |= (prefixes & (PREFIX_DATA | PREFIX_REPZ));
-  if (prefixes & PREFIX_DATA)
-    strcpy (obuf, "vmclear");
-  else if (prefixes & PREFIX_REPZ)
-    strcpy (obuf, "vmxon");
+  if (modrm.mod == 3)
+    {
+      strcpy (obuf, "rdrand");
+      OP_E (v_mode, sizeflag);
+    }
   else
-    strcpy (obuf, "vmptrld");
-  OP_E (bytemode, sizeflag);
+    {
+      used_prefixes |= (prefixes & (PREFIX_DATA | PREFIX_REPZ));
+      if (prefixes & PREFIX_DATA)
+	strcpy (obuf, "vmclear");
+      else if (prefixes & PREFIX_REPZ)
+	strcpy (obuf, "vmxon");
+      else
+	strcpy (obuf, "vmptrld");
+      OP_E (bytemode, sizeflag);
+    }
+}
+
+static void
+OP_VMX2 (int bytemode, int sizeflag)
+{
+  if (modrm.mod == 3)
+    {
+      strcpy (obuf, "rdseed");
+      OP_E (v_mode, sizeflag);
+    }
+  else
+    {
+      strcpy (obuf, "vmptrst");
+      OP_M (q_mode, sizeflag);
+    }
 }
 
 static void
@@ -6410,7 +6574,7 @@ static void
 XMM_Fixup (int reg, int sizeflag ATTRIBUTE_UNUSED)
 {
   sprintf (scratchbuf, "%%xmm%d", reg);
-  oappend (scratchbuf + intel_syntax);
+  oappend (&scratchbuf[intel_syntax]);
 }
 
 static void

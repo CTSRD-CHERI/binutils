@@ -488,11 +488,27 @@ bfd_elf_record_link_assignment (bfd *output_bfd,
       if (h->root.u.undef.next != NULL || htab->root.undefs_tail == &h->root)
 	bfd_link_repair_undef_list (&htab->root);
     }
-
-  if (h->root.type == bfd_link_hash_new)
+  else if (h->root.type == bfd_link_hash_new)
     {
       bfd_elf_link_mark_dynamic_symbol (info, h, NULL);
       h->non_elf = 0;
+    }
+  else if (h->root.type == bfd_link_hash_indirect)
+    {
+      const struct elf_backend_data *bed = get_elf_backend_data (output_bfd);
+      struct elf_link_hash_entry *hv = h;
+      do
+	hv = (struct elf_link_hash_entry *) hv->root.u.i.link;
+      while (hv->root.type == bfd_link_hash_indirect
+	     || hv->root.type == bfd_link_hash_warning);
+      h->root.type = bfd_link_hash_undefined;
+      hv->root.type = bfd_link_hash_indirect;
+      hv->root.u.i.link = (struct bfd_link_hash_entry *) h;
+      (*bed->elf_backend_copy_indirect_symbol) (info, h, hv);
+    }
+  else if (h->root.type == bfd_link_hash_warning)
+    {
+      abort ();
     }
 
   /* If this symbol is being provided by the linker script, and it is
@@ -858,9 +874,11 @@ _bfd_elf_merge_symbol (bfd *abfd,
     return FALSE;
   *sym_hash = h;
 
+  bed = get_elf_backend_data (abfd);
+
   /* This code is for coping with dynamic objects, and is only useful
      if we are doing an ELF link.  */
-  if (info->hash->creator != abfd->xvec)
+  if (!(*bed->relocs_compatible) (abfd->xvec, info->hash->creator))
     return TRUE;
 
   /* For merging, we only care about real symbols.  */
@@ -947,7 +965,6 @@ _bfd_elf_merge_symbol (bfd *abfd,
 	    && h->root.type != bfd_link_hash_undefweak
 	    && h->root.type != bfd_link_hash_common);
 
-  bed = get_elf_backend_data (abfd);
   /* When we try to create a default indirect symbol from the dynamic
      definition with the default version, we skip it if its type and
      the type of existing regular definition mismatch.  We only do it
@@ -1416,10 +1433,10 @@ _bfd_elf_merge_symbol (bfd *abfd,
 	 case, we make the versioned symbol point to the normal one.  */
       const struct elf_backend_data *bed = get_elf_backend_data (abfd);
       flip->root.type = h->root.type;
+      flip->root.u.undef.abfd = h->root.u.undef.abfd;
       h->root.type = bfd_link_hash_indirect;
       h->root.u.i.link = (struct bfd_link_hash_entry *) flip;
       (*bed->elf_backend_copy_indirect_symbol) (info, flip, h);
-      flip->root.u.undef.abfd = h->root.u.undef.abfd;
       if (h->def_dynamic)
 	{
 	  h->def_dynamic = 0;
@@ -3226,6 +3243,40 @@ elf_finalize_dynstr (bfd *output_bfd, struct bfd_link_info *info)
   return TRUE;
 }
 
+/* Return TRUE iff relocations for INPUT are compatible with OUTPUT.
+   The default is to only match when the INPUT and OUTPUT are exactly
+   the same target.  */
+
+bfd_boolean
+_bfd_elf_default_relocs_compatible (const bfd_target *input,
+				    const bfd_target *output)
+{
+  return input == output;
+}
+
+/* Return TRUE iff relocations for INPUT are compatible with OUTPUT.
+   This version is used when different targets for the same architecture
+   are virtually identical.  */
+
+bfd_boolean
+_bfd_elf_relocs_compatible (const bfd_target *input,
+			    const bfd_target *output)
+{
+  const struct elf_backend_data *obed, *ibed;
+
+  if (input == output)
+    return TRUE;
+
+  ibed = xvec_get_elf_backend_data (input);
+  obed = xvec_get_elf_backend_data (output);
+
+  if (ibed->arch != obed->arch)
+    return FALSE;
+
+  /* If both backends are using this function, deem them compatible.  */
+  return ibed->relocs_compatible == obed->relocs_compatible;
+}
+
 /* Add symbols from an ELF object file to the linker hash table.  */
 
 static bfd_boolean
@@ -4305,9 +4356,38 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 		 --no-add-needed is used.  */
 	      if ((elf_dyn_lib_class (abfd) & DYN_NO_NEEDED) != 0)
 		{
+		  bfd_boolean looks_soish;
+		  const char *print_name;
+		  int print_len;
+		  size_t len, lend = 0;
+
+		  looks_soish = FALSE;
+		  print_name = soname;
+		  print_len = strlen(soname);
+		  if (strncmp(soname, "lib", 3) == 0)
+		    {
+		      len = print_len;
+		      if (len > 5 && strcmp(soname + len - 2, ".a") == 0)
+			lend = len - 5;
+		      else
+			{
+			  while (len > 6 && (ISDIGIT(soname[len - 1]) ||
+					     soname[len - 1] == '.'))
+			    len--;
+			  if (strncmp(soname + len - 3, ".so", 3) == 0)
+			    lend = len - 6;
+			}
+		      if (lend != 0)
+			{
+			  print_name = soname + 3;
+			  print_len = lend;
+			  looks_soish = TRUE;
+		    	}
+		    }
+
 		  (*_bfd_error_handler)
-		    (_("%s: invalid DSO for symbol `%s' definition"),
-		     abfd, name);
+		    (_("undefined reference to symbol `%s' (try adding -l%s%.*s)"),
+		    name, looks_soish? "" : ":", print_len, print_name);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_free_vers;
 		}
@@ -4610,8 +4690,8 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
      different format.  It probably can't be done.  */
   if (! dynamic
       && is_elf_hash_table (htab)
-      && htab->root.creator == abfd->xvec
-      && bed->check_relocs != NULL)
+      && bed->check_relocs != NULL
+      && (*bed->relocs_compatible) (abfd->xvec, htab->root.creator))
     {
       asection *o;
 
@@ -10549,6 +10629,7 @@ elf_gc_sweep (bfd *abfd, struct bfd_link_info *info)
 	{
 	  /* Keep debug and special sections.  */
 	  if ((o->flags & (SEC_DEBUGGING | SEC_LINKER_CREATED)) != 0
+	      || elf_section_data (o)->this_hdr.sh_type == SHT_NOTE
 	      || (o->flags & (SEC_ALLOC | SEC_LOAD | SEC_RELOC)) == 0)
 	    o->gc_mark = 1;
 

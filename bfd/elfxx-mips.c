@@ -557,6 +557,10 @@ static bfd *reldyn_sorting_bfd;
 #define MIPS_ELF_DYN_SIZE(abfd) \
   (get_elf_backend_data (abfd)->s->sizeof_dyn)
 
+/* The size of the rld_map pointer.  */
+#define MIPS_ELF_RLD_MAP_SIZE(abfd) \
+  (get_elf_backend_data (abfd)->s->arch_size / 8)
+
 /* The size of a GOT entry.  */
 #define MIPS_ELF_GOT_SIZE(abfd) \
   (get_elf_backend_data (abfd)->s->arch_size / 8)
@@ -5000,6 +5004,9 @@ _bfd_elf_mips_mach (flagword flags)
     case E_MIPS_MACH_9000:
       return bfd_mach_mips9000;
 
+    case E_MIPS_MACH_OCTEON:
+      return bfd_mach_mips_octeon;
+
     case E_MIPS_MACH_SB1:
       return bfd_mach_mips_sb1;
 
@@ -7489,7 +7496,7 @@ _bfd_mips_elf_size_dynamic_sections (bfd *output_bfd,
 	{
 	  /* We add a room for __rld_map.  It will be filled in by the
 	     rtld to contain a pointer to the _r_debug structure.  */
-	  s->size += 4;
+	  s->size += MIPS_ELF_RLD_MAP_SIZE (output_bfd);
 	}
       else if (SGI_COMPAT (output_bfd)
 	       && CONST_STRNEQ (name, ".compact_rel"))
@@ -9146,6 +9153,10 @@ mips_set_isa_flags (bfd *abfd)
 
     case bfd_mach_mips5:
       val = E_MIPS_ARCH_5;
+      break;
+
+    case bfd_mach_mips_octeon:
+      val = E_MIPS_ARCH_64R2 | E_MIPS_MACH_OCTEON;
       break;
 
     case bfd_mach_mips_sb1:
@@ -10866,6 +10877,9 @@ struct mips_mach_extension {
    are ordered topologically with MIPS I extensions listed last.  */
 
 static const struct mips_mach_extension mips_mach_extensions[] = {
+  /* MIPS64r2 extensions.  */
+  { bfd_mach_mips_octeon, bfd_mach_mipsisa64r2 },
+
   /* MIPS64 extensions.  */
   { bfd_mach_mipsisa64r2, bfd_mach_mipsisa64 },
   { bfd_mach_mips_sb1, bfd_mach_mipsisa64 },

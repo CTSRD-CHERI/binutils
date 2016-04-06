@@ -82,6 +82,25 @@ int mips_flag_pdr = FALSE;
 int mips_flag_pdr = TRUE;
 #endif
 
+/* Control generation of error message for unsupported instructions in
+   Octeon. Octeon does not have floating point, and all the instructions
+   that use floating point registers are not allowed in Elf targets but 
+   are allowed in Linux targets by default.  */
+#ifdef OCTEON_ERROR_ON_UNSUPPORTED
+static int octeon_error_on_unsupported = 1;
+#else
+static int octeon_error_on_unsupported = 0;
+#endif
+
+/* Control generation of Octeon/MIPS unaligned load/store instructions.
+   For ELF target, default to Octeon load/store instructions.
+   For Linux target, default to MIPS load/store instructions.  */
+#ifdef OCTEON_USE_UNALIGN
+static int octeon_use_unalign = 1;
+#else
+static int octeon_use_unalign = 0;
+#endif
+
 #include "ecoff.h"
 
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
@@ -353,6 +372,11 @@ static int mips_32bitmode = 0;
   ((ISA) == ISA_MIPS32R2		\
    || (ISA) == ISA_MIPS64R2		\
    || mips_opts.ase_smartmips)
+
+/* Return true if ISA supports ins instructions. */
+#define ISA_HAS_INS(ISA)		\
+  ((ISA) == ISA_MIPS32R2		\
+  || (ISA) == ISA_MIPS64R2)
 
 /* Return true if ISA supports single-precision floats in odd registers.  */
 #define ISA_HAS_ODD_SINGLE_FPR(ISA)	\
@@ -1583,7 +1607,7 @@ struct regname {
     {"$c28",	RTYPE_CAP | 28}, \
     {"$c29",	RTYPE_CAP | 29}, \
     {"$c30",	RTYPE_CAP | 30}, \
-    {"$c31",	RTYPE_CAP | 31} 
+    {"$c31",	RTYPE_CAP | 31}
 
 /* TODO: Add symbolic names */
 
@@ -1694,7 +1718,6 @@ static const struct regname reg_names[] = {
   FPU_REGISTER_NAMES,
   FPU_CONDITION_CODE_NAMES,
   COPROC_CONDITION_CODE_NAMES,
-  
 
   /* The $txx registers depends on the abi,
      these will be added later into the symbol table from
@@ -6177,6 +6200,16 @@ macro (struct mips_cl_insn *ip)
     case M_LWU_AB:
       s = "lwu";
     ld:
+      if (mips_opts.arch == CPU_OCTEON
+	   && octeon_error_on_unsupported
+           && (mask == M_LDC1_AB || mask == M_LDC2_AB || mask == M_LDC3_AB
+               || mask == M_L_DOB || mask == M_L_DAB
+               || mask == M_LI_D || mask == M_LI_DD
+               || mask == M_LI_S || mask == M_LI_SS))
+        {
+          as_bad (_("opcode not implemented in Octeon `%s'"), ip->insn_mo->name);
+          return;
+        }
       if (breg == treg || coproc || lr)
 	{
 	  tempreg = AT;
@@ -6257,6 +6290,15 @@ macro (struct mips_cl_insn *ip)
     case M_SDR_AB:
       s = "sdr";
     st:
+      if (mips_opts.arch == CPU_OCTEON
+	  && octeon_error_on_unsupported
+          && (mask == M_SWC0_AB || mask == M_SWC1_AB || mask == M_SWC2_AB
+              || mask == M_SDC1_AB || mask == M_SDC2_AB || mask == M_SDC3_AB
+              || mask == M_S_DAB || mask == M_S_DOB))
+        {
+          as_bad (_("opcode not implemented in Octeon `%s'"), ip->insn_mo->name);
+          return;
+        }
       tempreg = AT;
       used_at = 1;
     ld_st:
@@ -7115,6 +7157,47 @@ macro (struct mips_cl_insn *ip)
       macro_build (&offset_expr, s, "t,o(b)", treg + 1, BFD_RELOC_LO16, breg);
       break;
 
+    case M_SAA_AB:
+      s = "saa";
+      goto saa_saad;
+
+    case M_SAAD_AB:
+      s = "saad";
+
+      saa_saad:
+      /* The "saa/saad" instructions are new in CN58XX. These instructions
+	 do not specify offset. When invoked with address or symbol, then
+	 load the address or value of symbol in a register using the dla macro
+	 into AT, and pass the register for emitting "saa/saad" instruction. 
+	 This will get expanded to
+
+	    dla AT, constant/label
+	    saa/saad $treg,(AT)  */
+      {
+	char *name = "dla";
+	char *fmt = "t,A(b)";
+	const struct mips_opcode *mo;
+  	struct mips_cl_insn insn;
+
+	mo = hash_find (op_hash, name);
+	assert (strcmp (name, mo->name) == 0);
+	assert (strcmp (fmt, mo->args) == 0);
+	create_insn (&insn, mo);
+  
+	insn.insn_opcode = insn.insn_mo->match;
+
+	used_at = 1;
+	INSERT_OPERAND (RT, insn, AT);
+	if (breg)
+	  INSERT_OPERAND (RS, insn, breg);
+
+	/* The address part is forwarded through the global offset_expr. */
+	macro (&insn);
+
+	macro_build (NULL, s, "t,(b)", treg, AT);
+	break;
+     }
+ 
    /* New code added to support COPZ instructions.
       This code builds table entries out of the macros in mip_opcodes.
       R4000 uses interlocks to handle coproc delays.
@@ -7144,6 +7227,12 @@ macro (struct mips_cl_insn *ip)
     case M_COP3:
       s = "c3";
     copz:
+      if (!strcmp (s,"c2") && mips_opts.arch == CPU_OCTEON
+	  && octeon_error_on_unsupported)
+        {
+          as_bad (_("opcode not implemented in Octeon `%s'"), ip->insn_mo->name);
+          return;
+        }
       /* For now we just do C (same as Cz).  The parameter will be
          stored in insn_opcode by mips_ip.  */
       macro_build (NULL, s, "C", ip->insn_opcode);
@@ -7746,6 +7835,11 @@ macro2 (struct mips_cl_insn *ip)
 
     case M_TRUNCWS:
     case M_TRUNCWD:
+      if (mips_opts.arch == CPU_OCTEON && octeon_error_on_unsupported)
+        {
+          as_bad (_("opcode not implemented in Octeon `%s'"), ip->insn_mo->name);
+          return;
+        }
       assert (mips_opts.isa == ISA_MIPS1);
       used_at = 1;
       sreg = (ip->insn_opcode >> 11) & 0x1f;	/* floating reg */
@@ -7781,6 +7875,7 @@ macro2 (struct mips_cl_insn *ip)
       used_at = 1;
       if (offset_expr.X_add_number >= 0x7fff)
 	as_bad (_("operand overflow"));
+      /* Expand the ulh to "lb, lbu, ins" instead of "lb, lbu, sll, ori". */
       if (! target_big_endian)
 	++offset_expr.X_add_number;
       macro_build (&offset_expr, s, "t,o(b)", AT, BFD_RELOC_LO16, breg);
@@ -7789,8 +7884,13 @@ macro2 (struct mips_cl_insn *ip)
       else
 	++offset_expr.X_add_number;
       macro_build (&offset_expr, "lbu", "t,o(b)", treg, BFD_RELOC_LO16, breg);
-      macro_build (NULL, "sll", "d,w,<", AT, AT, 8);
-      macro_build (NULL, "or", "d,v,t", treg, treg, AT);
+      if (ISA_HAS_INS (mips_opts.isa))
+	macro_build (NULL, "ins", "t,r,+A,+B", treg, AT, 8, 31);
+      else
+	{
+          macro_build (NULL, "sll", "d,w,<", AT, AT, 8);
+          macro_build (NULL, "or", "d,v,t", treg, treg, AT);
+	}
       break;
 
     case M_ULD:
@@ -7812,14 +7912,32 @@ macro2 (struct mips_cl_insn *ip)
 	  used_at = 1;
 	  tempreg = AT;
 	}
+
+      /* For small variables the compiler uses gp_rel to load the value of
+	 the variables. While parsing instructions "uld $2,%gp_rel(var)($28)"
+	 the offset_reloc[0] is set to BFD_RELOC_GPREL16. Use this relocation
+	 type while emitting instructions otherwise use BFD_RELOC_LO16.  */
+      if (offset_reloc[0] == BFD_RELOC_UNUSED)
+	offset_reloc[0] = BFD_RELOC_LO16;
+
+      if (octeon_use_unalign && mips_opts.arch == CPU_OCTEON)
+	{
+	  /* Reset used_at as tempreg is not used while generating Octeon 
+	     unaligned load/store.  */
+	  used_at = 0;
+	  macro_build (&offset_expr, (mask == M_ULW ? "ulw" : "uld"), "t,o(b)",
+		       treg, offset_reloc[0], breg);
+	  break;
+	}
+	  
       if (! target_big_endian)
 	offset_expr.X_add_number += off;
-      macro_build (&offset_expr, s, "t,o(b)", tempreg, BFD_RELOC_LO16, breg);
+      macro_build (&offset_expr, s, "t,o(b)", tempreg, offset_reloc[0], breg);
       if (! target_big_endian)
 	offset_expr.X_add_number -= off;
       else
 	offset_expr.X_add_number += off;
-      macro_build (&offset_expr, s2, "t,o(b)", tempreg, BFD_RELOC_LO16, breg);
+      macro_build (&offset_expr, s2, "t,o(b)", tempreg, offset_reloc[0], breg);
 
       /* If necessary, move the result in tempreg the final destination.  */
       if (treg == tempreg)
@@ -7843,16 +7961,31 @@ macro2 (struct mips_cl_insn *ip)
       load_address (AT, &offset_expr, &used_at);
       if (breg != 0)
 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", AT, AT, breg);
+
+      /* For small variables the compiler uses gp_rel to load the value of
+	 the variables. While parsing instructions "uld $2,%gp_rel(var)($28)"
+	 the offset_reloc[0] is set to BFD_RELOC_GPREL16. Use this relocation
+	 type while emitting instructions otherwise use BFD_RELOC_LO16.  */
+      if (offset_reloc[0] == BFD_RELOC_UNUSED)
+	offset_reloc[0] = BFD_RELOC_LO16;
+
+      if (octeon_use_unalign && mips_opts.arch == CPU_OCTEON)
+	{
+	  macro_build (&offset_expr, (mask == M_ULW_A ? "ulw" : "uld"), 
+		       "t,o(b)", treg, offset_reloc[0], AT);
+	  break;
+	}
+
       if (! target_big_endian)
 	expr1.X_add_number = off;
       else
 	expr1.X_add_number = 0;
-      macro_build (&expr1, s, "t,o(b)", treg, BFD_RELOC_LO16, AT);
+      macro_build (&expr1, s, "t,o(b)", treg, offset_reloc[0], AT);
       if (! target_big_endian)
 	expr1.X_add_number = 0;
       else
 	expr1.X_add_number = off;
-      macro_build (&expr1, s2, "t,o(b)", treg, BFD_RELOC_LO16, AT);
+      macro_build (&expr1, s2, "t,o(b)", treg, offset_reloc[0], AT);
       break;
 
     case M_ULH_A:
@@ -7861,6 +7994,23 @@ macro2 (struct mips_cl_insn *ip)
       load_address (AT, &offset_expr, &used_at);
       if (breg != 0)
 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", AT, AT, breg);
+
+      if (ISA_HAS_INS (mips_opts.isa))
+	{
+	  if (target_big_endian)
+	    expr1.X_add_number = 1;
+	  else
+	    expr1.X_add_number = 0;
+	  macro_build (&expr1, "lbu", "t,o(b)", treg, BFD_RELOC_LO16, AT);
+	  if (target_big_endian)
+	    expr1.X_add_number = 0;
+	  else
+	    expr1.X_add_number = 1;
+	  macro_build (&expr1, mask == M_ULH_A ? "lb" : "lbu", "t,o(b)",
+		       AT, BFD_RELOC_LO16, AT);
+	  macro_build (NULL, "ins", "t,r,+A,+B", treg, AT, 8, 31);
+	  break;
+	}
       if (target_big_endian)
 	expr1.X_add_number = 0;
       macro_build (&expr1, mask == M_ULH_A ? "lb" : "lbu", "t,o(b)",
@@ -7901,14 +8051,28 @@ macro2 (struct mips_cl_insn *ip)
     usw:
       if (offset_expr.X_add_number >= 0x8000 - off)
 	as_bad (_("operand overflow"));
+
+      /* For small variables the compiler uses gp_rel to load the value of
+	 the variables. While parsing instructions "uld $2,%gp_rel(var)($28)"
+	 the offset_reloc[0] is set to BFD_RELOC_GPREL16. Use this relocation
+	 type while emitting instructions otherwise use BFD_RELOC_LO16.  */
+      if (offset_reloc[0] == BFD_RELOC_UNUSED)
+	offset_reloc[0] = BFD_RELOC_LO16;
+
+      if (octeon_use_unalign && mips_opts.arch == CPU_OCTEON)
+	{
+	  macro_build (&offset_expr, (mask == M_USD ? "usd" : "usw"), 
+		       "t,o(b)", treg, offset_reloc[0], breg);
+	  break;
+	}
       if (! target_big_endian)
 	offset_expr.X_add_number += off;
-      macro_build (&offset_expr, s, "t,o(b)", treg, BFD_RELOC_LO16, breg);
+      macro_build (&offset_expr, s, "t,o(b)", treg, offset_reloc[0], breg);
       if (! target_big_endian)
 	offset_expr.X_add_number -= off;
       else
 	offset_expr.X_add_number += off;
-      macro_build (&offset_expr, s2, "t,o(b)", treg, BFD_RELOC_LO16, breg);
+      macro_build (&offset_expr, s2, "t,o(b)", treg, offset_reloc[0], breg);
       break;
 
     case M_USD_A:
@@ -7925,16 +8089,30 @@ macro2 (struct mips_cl_insn *ip)
       load_address (AT, &offset_expr, &used_at);
       if (breg != 0)
 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", AT, AT, breg);
+
+      /* For small variables the compiler uses gp_rel to load the value of
+	 the variables. While parsing instructions "uld $2,%gp_rel(var)($28)"
+	 the offset_reloc[0] is set to BFD_RELOC_GPREL16. Use this relocation
+	 type while emitting instructions otherwise use BFD_RELOC_LO16.  */
+      if (offset_reloc[0] == BFD_RELOC_UNUSED)
+	offset_reloc[0] = BFD_RELOC_LO16;
+
+      if (octeon_use_unalign && mips_opts.arch == CPU_OCTEON)
+	{
+	  macro_build (&offset_expr, (mask == M_USW_A ? "usw" : "usd"), 
+		       "t,o(b)", treg, offset_reloc[0], AT);
+	  break;
+	}
       if (! target_big_endian)
 	expr1.X_add_number = off;
       else
 	expr1.X_add_number = 0;
-      macro_build (&expr1, s, "t,o(b)", treg, BFD_RELOC_LO16, AT);
+      macro_build (&expr1, s, "t,o(b)", treg, offset_reloc[0], AT);
       if (! target_big_endian)
 	expr1.X_add_number = 0;
       else
 	expr1.X_add_number = off;
-      macro_build (&expr1, s2, "t,o(b)", treg, BFD_RELOC_LO16, AT);
+      macro_build (&expr1, s2, "t,o(b)", treg, offset_reloc[0], AT);
       break;
 
     case M_USH_A:
@@ -8224,6 +8402,8 @@ validate_mips_insn (const struct mips_opcode *opc)
       case ',': break;
       case '(': break;
       case ')': break;
+      case '^': USE_BITS (OP_MASK_BITIND,       OP_SH_BITIND);   break;
+      case '~': USE_BITS (OP_MASK_BITIND,       OP_SH_BITIND);   break;
       case '+':
     	switch (c = *p++)
 	  {
@@ -8304,6 +8484,7 @@ validate_mips_insn (const struct mips_opcode *opc)
       case 'v':	USE_BITS (OP_MASK_RS,		OP_SH_RS);	break;
       case 'w':	USE_BITS (OP_MASK_RT,		OP_SH_RT);	break;
       case 'x': break;
+      case 'y': USE_BITS (OP_MASK_CODE2,        OP_SH_CODE2);   break;
       case 'z': break;
       case 'P': USE_BITS (OP_MASK_PERFREG,	OP_SH_PERFREG);	break;
       case 'U': USE_BITS (OP_MASK_RD,           OP_SH_RD);
@@ -8503,6 +8684,82 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 	{
 	  if (mips_opts.arch == CPU_R4650 && (insn->pinfo & FP_D) != 0)
 	    ok = FALSE;
+
+	  if (mips_opts.arch == CPU_OCTEON
+	      && octeon_error_on_unsupported
+	      && ((insn->pinfo & FP_D) != 0
+	          || (insn->pinfo & FP_S) !=0
+	          || strcmp (insn->name, "prefx") == 0))
+	    {
+	      insn_error = "opcode not implemented in Octeon";
+	      return;
+	    }
+
+	  if (mips_opts.arch == CPU_OCTEON
+	      && octeon_error_on_unsupported
+	      && (strcmp (insn->name, "swc2") == 0
+		  || strcmp (insn->name, "lwc2") == 0
+		  || strcmp (insn->name, "sdc2") == 0
+		  || strcmp (insn->name, "ldc2") == 0
+		  || strcmp (insn->name, "bc2f") == 0
+		  || strcmp (insn->name, "bc2t") == 0
+		  || strcmp (insn->name, "mfc2") == 0
+		  || strcmp (insn->name, "mtc2") == 0
+		  || strcmp (insn->name, "ctc2") == 0
+		  || strcmp (insn->name, "cfc2") == 0
+		  || strcmp (insn->name, "mfhc2") == 0
+		  || strcmp (insn->name, "mthc2") == 0))
+	    {
+	      insn_error = "opcode not implemented in Octeon";
+	      return;
+	    }
+
+	  /* Issue a warning message for Octeon unaligned load/store 
+	     instructions used when octeon_use_unalign is not set.  */
+	  if (mips_opts.arch == CPU_OCTEON && ! octeon_use_unalign
+              && (strcmp (insn->name, "ulw") == 0
+                  || strcmp (insn->name, "uld") == 0
+                  || strcmp (insn->name, "usw") == 0
+                  || strcmp (insn->name, "usd") == 0))
+            {
+              static char buf[120];
+              sprintf (buf, _("Octeon specific unaligned load/store instructions are not allowed with -mno-octeon-useun"));
+              insn_error = buf;
+              return;
+            }
+
+	  /* Issue a warning message for MIPS unaligned load/store 
+	     instructions used when octeon_use_unalign is set.  */
+          if (mips_opts.arch == CPU_OCTEON && octeon_use_unalign
+              && (strcmp (insn->name, "lwl") == 0
+                  || strcmp (insn->name, "lwr") == 0
+                  || strcmp (insn->name, "ldl") == 0
+                  || strcmp (insn->name, "ldr") == 0
+                  || strcmp (insn->name, "sdl") == 0
+                  || strcmp (insn->name, "sdr") == 0
+                  || strcmp (insn->name, "swr") == 0
+                  || strcmp (insn->name, "swl") == 0))
+            {
+              static char buf[100];
+              sprintf (buf, _("Unaligned load/store instructions are not allowed with -mocteon-useun"));
+              insn_error = buf;
+              return;
+            }
+	}
+
+      /* Octeon has its own version of dmtc2/dmfc2 instructions, error on 
+	 other formats.  */
+      if (mips_opts.arch == CPU_OCTEON 
+	  && (strcmp (insn->name, "dmtc2") == 0
+	      || strcmp (insn->name, "dmfc2") == 0)
+	  && (insn->membership & INSN_OCTEON) != INSN_OCTEON)
+	{
+	  static char buf[100];
+	  sprintf (buf,
+		   _("opcode not supported in %s"),
+		     mips_cpu_info_from_arch (mips_opts.arch)->name);
+	  insn_error = buf;
+	  ok = FALSE;
 	}
 
       if (! ok)
@@ -8953,11 +9210,11 @@ do_msbd:
 
                 case 'o':
 	          my_getExpression (&imm_expr, s);
-	      	  check_absolute_expr (ip, &imm_expr);
-	      	  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
-	      	  imm_expr.X_op = O_absent;
-	      	  s = expr_end;
-	      	  continue;
+		  check_absolute_expr (ip, &imm_expr);
+		  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
 
 		case 'O':
 		  my_getExpression (&imm_expr, s);
@@ -9076,6 +9333,34 @@ do_msbd:
 	      s = expr_end;
 	      continue;
 
+             case '^':           /* must be at least one digit */
+	      /* Decode 5-bits of bbit0/1's bit index amount. If the value is 
+		 greater than 31, issue a warning and mask out all but the low 
+		 5 bits.  */
+	      my_getExpression (&imm_expr, s);
+	      check_absolute_expr (ip, &imm_expr);
+	      if ((unsigned long) imm_expr.X_add_number > 31)
+		{
+		  as_warn (_("Improper bit index amount (%lu)"),
+			   (unsigned long) imm_expr.X_add_number);
+		  imm_expr.X_add_number &= OP_MASK_BITIND;
+		}
+	      ip->insn_opcode |= imm_expr.X_add_number << OP_SH_BITIND;
+	      imm_expr.X_op = O_absent;
+	      s = expr_end;
+	      continue;
+ 
+            case '~':           /* bit index minus 32 */
+	      my_getExpression (&imm_expr, s);
+	      check_absolute_expr (ip, &imm_expr);
+	      if ((unsigned long) imm_expr.X_add_number < 32
+	          || (unsigned long) imm_expr.X_add_number > 63)
+	        break;
+	      ip->insn_opcode |= (imm_expr.X_add_number - 32) << OP_SH_BITIND;
+	      imm_expr.X_op = O_absent;
+	      s = expr_end;
+	      continue;
+
 	    case 'k':		/* cache code */
 	    case 'h':		/* prefx code */
 	      my_getExpression (&imm_expr, s);
@@ -9112,6 +9397,23 @@ do_msbd:
 			 ip->insn_mo->name,
 			 (unsigned long) imm_expr.X_add_number);
 	      INSERT_OPERAND (CODE2, *ip, imm_expr.X_add_number);
+	      imm_expr.X_op = O_absent;
+	      s = expr_end;
+	      continue;
+
+	    case 'y':
+	      /* Decode 10-bits of seqi/snei's signed constant offset. Issue 
+		 a warning message if the value is not within the range.  */
+	      my_getExpression (&imm_expr, s);
+	      check_absolute_expr (ip, &imm_expr);
+	      if (((unsigned long) imm_expr.X_add_number + 0x200) > 1023)
+		{
+		  as_warn (_("Illegal 10-bit signed constant (%lu)"),
+			   (unsigned long) imm_expr.X_add_number);
+		 	   imm_expr.X_add_number &= OP_MASK_CODE2;
+		}
+	      ip->insn_opcode |= (imm_expr.X_add_number & OP_MASK_CODE2)
+				  << OP_SH_CODE2;
 	      imm_expr.X_op = O_absent;
 	      s = expr_end;
 	      continue;
@@ -9337,6 +9639,11 @@ do_msbd:
 						| INSN_STORE_MEMORY))))
 		rtype |= RTYPE_VEC;
 	      s_reset = s;
+	      if (mips_opts.arch == CPU_OCTEON && octeon_error_on_unsupported)
+		{
+		  insn_error = "opcode not implemented in Octeon";
+		  return;
+		}
 	      if (reg_lookup (&s, rtype, &regno))
 		{
 		  if ((regno & 1) != 0
@@ -11109,6 +11416,16 @@ struct option md_longopts[] =
   {"mvxworks-pic", no_argument, NULL, OPTION_MVXWORKS_PIC},
 #endif /* OBJ_ELF */
 
+#define OPTION_MOCTEON_UNSUPPORTED (OPTION_MISC_BASE + 28)
+#define OPTION_NO_MOCTEON_UNSUPPORTED (OPTION_MISC_BASE + 29)
+  {"mocteon-unsupported", no_argument, NULL, OPTION_MOCTEON_UNSUPPORTED},
+  {"mno-octeon-unsupported", no_argument, NULL, OPTION_NO_MOCTEON_UNSUPPORTED},
+
+#define OPTION_MOCTEON_USEUN (OPTION_MISC_BASE + 30)
+#define OPTION_NO_MOCTEON_USEUN (OPTION_MISC_BASE + 31)
+  {"mocteon-useun", no_argument, NULL, OPTION_MOCTEON_USEUN},
+  {"mno-octeon-useun", no_argument, NULL, OPTION_NO_MOCTEON_USEUN},
+
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof (md_longopts);
@@ -11157,6 +11474,22 @@ md_parse_option (int c, char *arg)
 
     case OPTION_EL:
       target_big_endian = 0;
+      break;
+
+    case OPTION_MOCTEON_UNSUPPORTED:
+      octeon_error_on_unsupported = 1;
+      break;
+
+    case OPTION_NO_MOCTEON_UNSUPPORTED:
+      octeon_error_on_unsupported = 0;
+      break;
+
+    case OPTION_MOCTEON_USEUN:
+      octeon_use_unalign = 1;
+      break;
+
+    case OPTION_NO_MOCTEON_USEUN:
+      octeon_use_unalign = 0;
       break;
 
     case 'O':
@@ -14935,6 +15268,9 @@ static const struct mips_cpu_info mips_cpu_info_table[] =
   { "sb1a",           MIPS_CPU_ASE_MIPS3D | MIPS_CPU_ASE_MDMX,
 						ISA_MIPS64,	CPU_SB1 },
 
+  /* Cavium Networks Octeon CPU core */
+  { "octeon",         0,      ISA_MIPS64R2,   CPU_OCTEON },
+
   /* End marker */
   { NULL, 0, 0, 0 }
 };
@@ -15190,12 +15526,18 @@ MIPS options:\n\
 -n32			create n32 ABI object file\n\
 -64			create 64 ABI object file\n"));
 #endif
+  fprintf (stream, _("\
+-mocteon-unsupported    error on unsupported Octeon instructions\n\
+-mno-octeon-unsupported do not error on unsupported Octeon instructions\n"));
+  fprintf (stream, _("\
+-mocteon-useun    generate Octeon unaligned load/store instructions\n\
+-mno-octeon-useun generate MIPS unaligned load/store instructions\n"));
 }
 
 int
 mips_dwarf2_addr_size (void)
 {
-  if (mips_abi == N64_ABI)
+  if (HAVE_64BIT_SYMBOLS)
     return 8;
   else
     return 4;

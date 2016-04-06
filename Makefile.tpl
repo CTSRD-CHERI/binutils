@@ -287,7 +287,7 @@ MAKEINFOFLAGS = --split-size=5000000
 
 AS = @AS@
 AR = @AR@
-ARFLAGS = @ARFLAGS@
+AR_FLAGS = rc
 CC = @CC@
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@

@@ -390,6 +390,42 @@ mips*el-*-linux-*)	targ_emul=elf32ltsmip
 mips*-*-linux-*)	targ_emul=elf32btsmip
 			targ_extra_emuls="elf32ltsmip elf32btsmipn32 elf64btsmip elf32ltsmipn32 elf64ltsmip"
 			targ_extra_libpath=$targ_extra_emuls ;;
+# Add the freebsd targets:
+# From the Makefile:
+#.if ${TARGET_ARCH:Mmips64*} != ""
+#NATIVE_EMULATION=elf64${_EMULATION_ENDIAN}tsmip_fbsd
+#.elif ${TARGET_ARCH:Mmipsn32*} != ""
+#NATIVE_EMULATION=elf32${_EMULATION_ENDIAN}tsmipn32_fbsd
+#.else
+#NATIVE_EMULATION?=elf32${_EMULATION_ENDIAN}tsmip_fbsd
+#.endif
+#
+#MIPS_ABIS=elf32btsmip_fbsd elf32ltsmip_fbsd elf64btsmip_fbsd elf64ltsmip_fbsd \
+#    elf32btsmipn32_fbsd elf32ltsmipn32_fbsd
+mips64*el-*-freebsd*)	targ_emul=elf64ltsmip_fbsd
+			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64btsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd"
+			#targ_extra_libpath=$targ_extra_emuls
+			;;
+mips64*-*-freebsd*)	targ_emul=elf64btsmip_fbsd
+			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64ltsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd"
+			#targ_extra_libpath=$targ_extra_emuls
+			;;
+mipsn32*el-*-freebsd*)	targ_emul=elf32ltsmipn32_fbsd
+			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64btsmip_fbsd elf64ltsmip_fbsd elf32btsmipn32_fbsd"
+			#targ_extra_libpath=$targ_extra_emuls
+			;;
+mipsn32*-*-freebsd*)	targ_emul=elf32btsmipn32_fbsd
+			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64btsmip_fbsd elf64ltsmip_fbsd elf32ltsmipn32_fbsd"
+			#targ_extra_libpath=$targ_extra_emuls
+			;;
+mips*el-*-freebsd*)	targ_emul=elf32ltsmip_fbsd
+			targ_extra_emuls="elf32btsmip_fbsd elf64btsmip_fbsd elf64ltsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd"
+			#targ_extra_libpath=$targ_extra_emuls
+			;;
+mips*-*-freebsd*)	targ_emul=elf32btsmip_fbsd
+			targ_extra_emuls="elf32ltsmip_fbsd elf64btsmip_fbsd elf64ltsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd"
+			#targ_extra_libpath=$targ_extra_emuls
+			;;
 mips*-*-lnews*)		targ_emul=mipslnews ;;
 mips*-*-sysv4*)         targ_emul=elf32btsmip
 			;;

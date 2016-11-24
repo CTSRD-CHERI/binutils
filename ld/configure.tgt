@@ -402,12 +402,16 @@ mips*-*-linux-*)	targ_emul=elf32btsmip
 #
 #MIPS_ABIS=elf32btsmip_fbsd elf32ltsmip_fbsd elf64btsmip_fbsd elf64ltsmip_fbsd \
 #    elf32btsmipn32_fbsd elf32ltsmipn32_fbsd
+#.if ${MK_CHERI} == "yes"
+#MIPS_ABIS+=elf64btsmip_cheri_fbsd
+#LIBSEARCHPATH.elf64btsmip_cheri_fbsd=\"=/usr/libcheri\"
+#.endif
 mips64*el-*-freebsd*)	targ_emul=elf64ltsmip_fbsd
 			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64btsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd"
 			#targ_extra_libpath=$targ_extra_emuls
 			;;
 mips64*-*-freebsd*)	targ_emul=elf64btsmip_fbsd
-			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64ltsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd"
+			targ_extra_emuls="elf32btsmip_fbsd elf32ltsmip_fbsd elf64ltsmip_fbsd elf32btsmipn32_fbsd elf32ltsmipn32_fbsd elf64btsmip_cheri_fbsd"
 			#targ_extra_libpath=$targ_extra_emuls
 			;;
 mipsn32*el-*-freebsd*)	targ_emul=elf32ltsmipn32_fbsd

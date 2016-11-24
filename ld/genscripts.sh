@@ -87,7 +87,10 @@ fi
 CUSTOMIZER_SCRIPT="${srcdir}/emulparams/${CUSTOMIZER_SCRIPT}.sh"
 
 # Include the emulation-specific parameters:
+echo "NATIVE_LIB_DIRS=$NATIVE_LIB_DIRS"
+echo "SOURCING ${CUSTOMIZER_SCRIPT} ${EMULATION_NAME}"
 . ${CUSTOMIZER_SCRIPT} ${EMULATION_NAME}
+echo "NATIVE_LIB_DIRS=$NATIVE_LIB_DIRS"
 
 if test -d ldscripts; then
   true
@@ -151,6 +154,7 @@ if [ "x${LIB_PATH}" = "x" ] && [ "x${USE_LIBPATH}" = xyes ] ; then
     esac
   fi
 
+  echo checking for suffix and sysroot
   for lib in ${libs}; do
     # The "=" is harmless if we aren't using a sysroot, but also needless.
     if [ "x${use_sysroot}" = "xyes" ] ; then

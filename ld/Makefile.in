@@ -706,7 +706,6 @@ POTFILES = $(CFILES) $(HFILES) $(EMULATION_FILES)
 
 # These all start with e so 'make clean' can find them.
 GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
-GENSCRIPTS_CHERI = LIB_PATH='/libcheri:/usr/libcheri:/usr/local/libcheri' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
 GEN_DEPENDS = $(srcdir)/genscripts.sh stringify.sed
 ELF_DEPS = $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/elf-generic.em
 ELF_GEN_DEPS = $(srcdir)/emultempl/generic.em $(srcdir)/emultempl/elf-generic.em $(srcdir)/emultempl/genelf.em
@@ -1839,7 +1838,7 @@ eelf64btsmip_cheri_fbsd.c: $(srcdir)/emulparams/elf64btsmip_cheri_fbsd.sh \
   $(srcdir)/emulparams/elf64bmip-defs.sh \
   $(srcdir)/emulparams/elf32bmipn32-defs.sh $(ELF_DEPS) \
   $(srcdir)/emultempl/mipself.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-	${GENSCRIPTS_CHERI} elf64btsmip_cheri_fbsd "$(tdir_elf64btsmip_cheri_fbsd)"
+	${GENSCRIPTS} elf64btsmip_cheri_fbsd "$(tdir_elf64btsmip_cheri_fbsd)"
 eelf64ltsmip.c: $(srcdir)/emulparams/elf64ltsmip.sh \
   $(srcdir)/emulparams/elf64btsmip.sh $(srcdir)/emulparams/elf64bmip-defs.sh \
   $(srcdir)/emulparams/elf32bmipn32-defs.sh $(ELF_DEPS) \

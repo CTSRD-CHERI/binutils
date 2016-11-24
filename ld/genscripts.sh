@@ -101,6 +101,11 @@ fi
 # may already have been set by the emulparams file, but that's OK
 # (it'll just get set to "yes" twice).
 
+echo "EMULATION_LIBPATH=$EMULATION_LIBPATH"
+echo "EMULATION_NAME=$EMULATION_NAME"
+
+
+
 case " $EMULATION_LIBPATH " in
   *" ${EMULATION_NAME} "*)
     if [ "x${host}" = "x${target}" ] ; then
@@ -128,7 +133,9 @@ fi
 #
 # If the emulparams file set LIBPATH_SUFFIX, prepend an extra copy of
 # the library path with the suffix applied.
-
+echo "LIB_PATH=${LIB_PATH}"
+echo "USE_LIBPATH=${USE_LIBPATH}"
+echo "NATIVE_LIB_DIRS=${NATIVE_LIB_DIRS}"
 if [ "x${LIB_PATH}" = "x" ] && [ "x${USE_LIBPATH}" = xyes ] ; then
   LIB_PATH2=
 
@@ -181,6 +188,8 @@ if [ "x${LIB_PATH}" = "x" ] && [ "x${USE_LIBPATH}" = xyes ] ; then
   esac
 fi
 
+echo "computed LIB_PATH=${LIB_PATH}"
+
 # Always search $(tooldir)/lib, aka /usr/local/TARGET/lib, except for
 # sysrooted configurations and when LIBPATH=":".
 if [ "x${use_sysroot}" != "xyes" ] ; then
@@ -198,9 +207,11 @@ if [ "x${use_sysroot}" != "xyes" ] ; then
     esac
   fi
 fi
+echo "after sysroot: LIB_PATH=${LIB_PATH}"
+
 
 LIB_SEARCH_DIRS=`echo ${LIB_PATH} | sed -e 's/:/ /g' -e 's/\([^ ][^ ]*\)/SEARCH_DIR(\\"\1\\");/g'`
-
+echo "LIB_SEARCH_DIRS=${LIB_SEARCH_DIRS}"
 # We need it for testsuite.
 set $EMULATION_LIBPATH
 if [ "x$1" = "x$EMULATION_NAME" ]; then
@@ -264,6 +275,7 @@ CONSTRUCTING=" "
 LD_FLAG=
 DATA_ALIGNMENT=${DATA_ALIGNMENT_}
 RELOCATING=" "
+echo "CREATING ${CUSTOMIZER_SCRIPT} ${EMULATION_NAME} ${srcdir}/scripttempl/${SCRIPT_NAME}.sc > ldscripts/${EMULATION_NAME}.x"
 ( echo "/* Default linker script, for normal executables */"
   . ${CUSTOMIZER_SCRIPT} ${EMULATION_NAME}
   . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc

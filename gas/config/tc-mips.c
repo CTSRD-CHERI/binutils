@@ -1719,6 +1719,7 @@ static const struct regname reg_names[] = {
   FPU_CONDITION_CODE_NAMES,
   COPROC_CONDITION_CODE_NAMES,
 
+
   /* The $txx registers depends on the abi,
      these will be added later into the symbol table from
      one of the tables below once mips_abi is set after 
@@ -2957,7 +2958,7 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
 	     instruction.  May want to add this support in the future.  */
 	}
       /* Never set the bit for $0, which is always zero.  */
-      mips_gprmask &= ~1 << 0;
+      mips_gprmask &= ~1;
     }
   else
     {
@@ -9212,9 +9213,8 @@ do_msbd:
 		  continue;
 
                 case 's':
-		  my_getExpression (&imm_expr, s);
+	          my_getExpression (&imm_expr, s);
 		  check_absolute_expr (ip, &imm_expr);
-		  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
 		  if ((imm_expr.X_add_number  % 16) != 0)
 		    as_bad (_("immediate (%ld) not 16-byte aligned"),
 		      (long)imm_expr.X_add_number);
@@ -9225,6 +9225,7 @@ do_msbd:
 		  imm_expr.X_op = O_absent;
 		  s = expr_end;
 		  continue;
+
 		case 'O':
 		  my_getExpression (&imm_expr, s);
 		  check_absolute_expr (ip, &imm_expr);

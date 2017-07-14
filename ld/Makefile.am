@@ -91,10 +91,10 @@ CXX_FOR_TARGET = ` \
   fi`
 
 noinst_PROGRAMS = ld-new
-info_TEXINFOS = ld.texinfo
-ld_TEXINFOS = configdoc.texi
-noinst_TEXINFOS = ldint.texinfo
-man_MANS = ld.1
+# info_TEXINFOS = ld.texinfo
+# ld_TEXINFOS = configdoc.texi
+# noinst_TEXINFOS = ldint.texinfo
+# man_MANS = ld.1
 
 AM_MAKEINFOFLAGS = -I $(srcdir) -I $(BFDDIR)/doc -I ../bfd/doc \
 		   -I $(top_srcdir)/../libiberty

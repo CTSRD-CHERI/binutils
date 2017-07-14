@@ -3,7 +3,9 @@
 AUTOMAKE_OPTIONS = dejagnu no-dist foreign
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
-SUBDIRS = doc po
+# Docs don't build properly on modern systems -> skip
+# SUBDIRS = doc po
+SUBDIRS = po
 
 tooldir = $(exec_prefix)/$(target_alias)
 

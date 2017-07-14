@@ -3,7 +3,9 @@
 AUTOMAKE_OPTIONS = 1.11 subdir-objects no-dist foreign dejagnu
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
-SUBDIRS = doc po
+# Docs don't build properly on modern systems -> skip
+# SUBDIRS = doc po
+SUBDIRS = po
 # Automake should figure this out on its own.  It doesn't, because
 # of the "cygnus" option.  But distclean still wants it.
 DIST_SUBDIRS = $(SUBDIRS)

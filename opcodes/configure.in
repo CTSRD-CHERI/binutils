@@ -17,16 +17,7 @@ changequote([,])dnl
 
 AM_INIT_AUTOMAKE(opcodes, ${BFD_VERSION})
 
-dnl These must be called before AM_PROG_LIBTOOL, because it may want
-dnl to call AC_CHECK_PROG.
-AC_CHECK_TOOL(AR, ar)
-AC_CHECK_TOOL(RANLIB, ranlib, :)
-
-dnl Default to a non shared library.  This may be overridden by the
-dnl configure option --enable-shared.
-AM_DISABLE_SHARED
-
-AM_PROG_LIBTOOL
+LT_INIT([disable-shared])
 
 AC_ARG_ENABLE(targets,
 [  --enable-targets        alternative target configurations],

@@ -419,7 +419,10 @@ ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 INCDIR = $(srcdir)/../include
 CSEARCH = -I. -I$(srcdir) -I$(INCDIR)
 MKDEP = gcc -MM
-SUBDIRS = doc po
+
+# Docs don't build properly on modern systems -> skip
+# SUBDIRS = doc po
+SUBDIRS = po
 bfddocdir = doc
 bfdlib_LTLIBRARIES = libbfd.la
 AM_CFLAGS = $(WARN_CFLAGS)

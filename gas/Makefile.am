@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = 1.8 cygnus dejagnu
+AUTOMAKE_OPTIONS = 1.8 foreign no-dist dejagnu
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
 SUBDIRS = doc po

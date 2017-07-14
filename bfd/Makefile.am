@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = 1.9 cygnus
+AUTOMAKE_OPTIONS = 1.9 foreign no-dist
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 
 # Uncomment the following line when doing a release.

@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus dejagnu
+AUTOMAKE_OPTIONS = dejagnu no-texinfo.tex info-in-builddir no-dist foreign
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
 SUBDIRS = po

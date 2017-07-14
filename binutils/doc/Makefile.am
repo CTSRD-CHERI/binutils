@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus
+AUTOMAKE_OPTIONS = info-in-builddir
 
 # What version of the manual you want; "all" includes everything
 CONFIG=all

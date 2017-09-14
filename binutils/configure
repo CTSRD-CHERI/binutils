@@ -13127,9 +13127,6 @@ fi
 rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
-if test "$LEX" = :; then
-  LEX=${am_missing_run}flex
-fi
 
 ALL_LINGUAS="fr tr ja es sv da zh_CN ru ro rw zh_TW fi vi"
 # If we haven't got the data from the intl directory,

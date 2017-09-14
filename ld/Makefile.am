@@ -452,11 +452,11 @@ STAGESTUFF = *.o ldscripts/* e*.c
 
 # Disable -Werror, if it has been enabled, since old versions of bison/
 # yacc will produce working code which contain compile time warnings. 
-ldgram.o:
+ldgram.o: ldgram.c
 	$(COMPILE) -c $< $(NO_WERROR)
-ldlex.o:
+ldlex.o: ldlex.c
 	$(COMPILE) -c $< $(NO_WERROR)
-deffilep.o:
+deffilep.o: deffilep.c
 	$(COMPILE) -c $< $(NO_WERROR)
 
 # At the moment this is just a list of those emulation template files

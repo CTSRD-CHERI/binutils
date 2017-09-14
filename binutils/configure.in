@@ -40,7 +40,7 @@ if test -z "$host" ; then
 fi
 
 AC_PROG_YACC
-AM_PROG_LEX
+AC_PROG_LEX
 
 ALL_LINGUAS="fr tr ja es sv da zh_CN ru ro rw zh_TW fi vi"
 ZW_GNU_GETTEXT_SISTER_DIR

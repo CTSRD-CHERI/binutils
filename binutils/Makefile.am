@@ -16,8 +16,9 @@ CC_FOR_BUILD = @CC_FOR_BUILD@
 EXEEXT_FOR_BUILD = @EXEEXT_FOR_BUILD@
 
 YACC = `if [ -f ../bison/bison ]; then echo ../bison/bison -y -L$(srcdir)/../bison/; else echo @YACC@; fi`
-YFLAGS = -d
+AM_YFLAGS = -d
 LEX = `if [ -f ../flex/flex ]; then echo ../flex/flex; else echo @LEX@; fi`
+AM_LFLAGS =
 
 WARN_CFLAGS = @WARN_CFLAGS@
 NO_WERROR = @NO_WERROR@
@@ -71,7 +72,7 @@ BASEDIR = $(srcdir)/..
 BFDDIR = $(BASEDIR)/bfd
 INCDIR	= $(BASEDIR)/include
 
-INCLUDES = -D_GNU_SOURCE \
+AM_CPPFLAGS = -D_GNU_SOURCE \
 	 -I. -I$(srcdir) -I../bfd -I$(BFDDIR) -I$(INCDIR) \
 	 @HDEFINES@ \
 	 @INCINTL@ \
@@ -268,14 +269,14 @@ sysroff.h: sysinfo$(EXEEXT_FOR_BUILD) sysroff.info
 sysinfo$(EXEEXT_FOR_BUILD): sysinfo.o syslex.o
 	$(CC_FOR_BUILD) $(CFLAGS) $(LDFLAGS) -o $@ sysinfo.o syslex.o
 
-syslex.o:
+syslex.o: syslex.c
 	if [ -r syslex.c ]; then \
 	  $(CC_FOR_BUILD) -c -I. $(AM_CFLAGS) $(CFLAGS) syslex.c -Wno-error ; \
 	else \
 	  $(CC_FOR_BUILD) -c -I. -I$(srcdir) $(AM_CFLAGS) $(CFLAGS) $(srcdir)/syslex.c -Wno-error ;\
 	fi
 
-sysinfo.o:
+sysinfo.o: sysinfo.c
 	if [ -r sysinfo.c ]; then \
 	  $(CC_FOR_BUILD) -c -I. $(AM_CFLAGS) $(CFLAGS) sysinfo.c -Wno-error ; \
 	else \
@@ -283,7 +284,7 @@ sysinfo.o:
 	fi
 
 bin2c$(EXEEXT_FOR_BUILD):
-	$(CC_FOR_BUILD) -o $@ $(INCLUDES) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) $(srcdir)/bin2c.c $(srcdir)/version.c
+	$(CC_FOR_BUILD) -o $@ $(AM_CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) $(LIBINTL) $(srcdir)/bin2c.c $(srcdir)/version.c
 
 embedspu: embedspu.sh
 	sed "s@^program_transform_name=@program_transform_name=$(program_transform_name)@" < $< > $@
@@ -299,25 +300,25 @@ sysinfo.h: sysinfo.c
 
 # Disable -Werror, if it has been enabled, since old versions of bison/
 # yacc will produce working code which contain compile time warnings.
-arparse.o:
+arparse.o: arparse.c
 	$(COMPILE) -c $< $(NO_WERROR)
-arlex.o:
+arlex.o: arlex.c
 	$(COMPILE) -c $< $(NO_WERROR)
-sysroff.o:
+sysroff.o: sysroff.c
 	$(COMPILE) -c $< $(NO_WERROR)
-defparse.o:
+defparse.o: defparse.c
 	$(COMPILE) -c $< $(NO_WERROR)
-deflex.o:
+deflex.o: deflex.c
 	$(COMPILE) -c $< $(NO_WERROR)
-nlmheader.o:
+nlmheader.o: nlmheader.c
 	$(COMPILE) -c $< $(NO_WERROR)
-rcparse.o:
+rcparse.o: rcparse.c
 	$(COMPILE) -c $< $(NO_WERROR)
-mcparse.o:
+mcparse.o: mcparse.c
 	$(COMPILE) -c $< $(NO_WERROR)
-rclex.o:
+rclex.o: rlex.c
 	$(COMPILE) -c $< $(NO_WERROR)
-mclex.o:
+mclex.o: mclex.c
 	$(COMPILE) -c $< $(NO_WERROR)
 
 srconv_SOURCES = srconv.c coffgrok.c $(BULIBS)
@@ -325,10 +326,10 @@ srconv_SOURCES = srconv.c coffgrok.c $(BULIBS)
 dlltool_SOURCES = dlltool.c defparse.y deflex.l $(BULIBS)
 dlltool_LDADD = $(BFDLIB) $(LIBIBERTY) @LEXLIB@ $(LIBINTL)
 
-dlltool.o:
+dlltool.o: $(srcdir)/dlltool.c
 	$(COMPILE) -c $(DLLTOOL_DEFS) $(srcdir)/dlltool.c
 
-rescoff.o:
+rescoff.o: $(srcdir)/rescoff.c
 	$(COMPILE) -c $(DLLTOOL_DEFS) $(srcdir)/rescoff.c
 
 coffdump_SOURCES = coffdump.c coffgrok.c $(BULIBS)
@@ -391,3 +392,8 @@ install-exec-local: install-binPROGRAMS $(bin_PROGRAMS) $(noinst_PROGRAMS)
 	  else true; \
 	  fi; \
 	done
+	
+	
+# HACK: after disabled dependency tracking:
+sysdump.o: sysroff.h sysroff.c
+srconv.o: sysroff.h sysroff.c

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script
 
 AC_PREREQ(2.59)
-AC_INIT
+AC_INIT([libiberty], [1.0])
 AC_CONFIG_SRCDIR([xmalloc.c])
 
 # This works around the fact that libtool configuration may change LD
@@ -102,7 +102,7 @@ AC_SUBST(HAVE_PERL)
 AC_CANONICAL_HOST
 
 dnl When we start using automake:
-dnl AM_INIT_AUTOMAKE(libiberty, 1.0)
+dnl AM_INIT_AUTOMAKE
 
 dnl These must be called before AM_PROG_LIBTOOL, because it may want
 dnl to call AC_CHECK_PROG.

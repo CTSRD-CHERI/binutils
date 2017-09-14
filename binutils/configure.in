@@ -1,16 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_PREREQ(2.57)
-AC_CANONICAL_SYSTEM
-changequote(,)dnl
-dnl BFD_VERSION=`sed -n -e 's/^.._INIT_AUTOMAKE.*,[ 	]*\([^ 	]*\)[ 	]*).*/\1/p' < ${srcdir}/../bfd/configure.in`
-changequote([,])dnl
+AC_PREREQ(2.59)
 AC_INIT([binutils], [2.17.50])
 AC_CONFIG_SRCDIR([ar.c])
 AC_ISC_POSIX
+AC_CANONICAL_SYSTEM
 AC_CONFIG_MACRO_DIRS([..])
 AM_INIT_AUTOMAKE
-
 
 AC_PROG_CC
 AC_GNU_SOURCE

@@ -150,8 +150,7 @@ am__v_texidevnull_ = $(am__v_texidevnull_@AM_DEFAULT_V@)
 am__v_texidevnull_0 = > /dev/null
 am__v_texidevnull_1 = 
 INFO_DEPS = as.info
-TEXINFO_TEX = $(top_srcdir)/../texinfo.tex
-am__TEXINFO_TEX_DIR = $(top_srcdir)/..
+am__TEXINFO_TEX_DIR = $(srcdir)/../../texinfo
 DVIS = as.dvi
 PDFS = as.pdf
 PSS = as.ps
@@ -356,6 +355,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = 1.11 subdir-objects no-dist foreign dejagnu info-in-builddir
+TEXINFO_TEX = ../../texinfo/texinfo.tex
 
 # What version of the manual you want; "all" includes everything
 CONFIG = all

@@ -103,7 +103,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
+DIST_COMMON = $(srcdir)/Makefile.am
 mkinstalldirs = $(SHELL) $(top_srcdir)/../mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
@@ -121,7 +121,6 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 SOURCES =
-DIST_SOURCES =
 AM_V_DVIPS = $(am__v_DVIPS_@AM_V@)
 am__v_DVIPS_ = $(am__v_DVIPS_@AM_DEFAULT_V@)
 am__v_DVIPS_0 = @echo "  DVIPS   " $@;
@@ -157,7 +156,7 @@ DVIS = as.dvi
 PDFS = as.pdf
 PSS = as.ps
 HTMLS = as.html
-TEXINFOS = as.texinfo
+TEXINFOS = as.texi
 TEXI2PDF = $(TEXI2DVI) --pdf --batch
 MAKEINFOHTML = $(MAKEINFO) --html
 AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
@@ -199,9 +198,10 @@ man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(man_MANS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
-am__DIST_COMMON = $(as_TEXINFOS) $(srcdir)/Makefile.in \
-	$(top_srcdir)/../mkinstalldirs $(top_srcdir)/../texinfo.tex
-DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+DEJATOOL = $(PACKAGE)
+RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
+EXPECT = expect
+RUNTEST = runtest
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
 AMTAR = @AMTAR@
@@ -355,7 +355,7 @@ te_file = @te_file@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = 1.8 info-in-builddir
+AUTOMAKE_OPTIONS = 1.11 subdir-objects no-dist foreign dejagnu info-in-builddir
 
 # What version of the manual you want; "all" includes everything
 CONFIG = all
@@ -367,7 +367,7 @@ POD2MAN = pod2man --center="GNU Development Tools" \
 	--release="binutils-$(VERSION)" --section=1
 
 man_MANS = as.1
-info_TEXINFOS = as.texinfo 
+info_TEXINFOS = as.texi 
 as_TEXINFOS = asconfig.texi $(CPU_DOCS)
 AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
 		   -I ../../bfd/doc
@@ -439,9 +439,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu doc/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign doc/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu doc/Makefile
+	  $(AUTOMAKE) --foreign doc/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -466,7 +466,7 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 
-as.info: as.texinfo $(as_TEXINFOS)
+as.info: as.texi $(as_TEXINFOS)
 	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
@@ -475,7 +475,7 @@ as.info: as.texinfo $(as_TEXINFOS)
 	  done; \
 	else :; fi && \
 	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) \
-	 -o $@ `test -f 'as.texinfo' || echo '$(srcdir)/'`as.texinfo; \
+	 -o $@ `test -f 'as.texi' || echo '$(srcdir)/'`as.texi; \
 	then \
 	  rc=0; \
 	else \
@@ -484,22 +484,22 @@ as.info: as.texinfo $(as_TEXINFOS)
 	fi; \
 	rm -rf $$backupdir; exit $$rc
 
-as.dvi: as.texinfo $(as_TEXINFOS) 
+as.dvi: as.texi $(as_TEXINFOS) 
 	$(AM_V_TEXI2DVI)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
 	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir)' \
 	$(TEXI2DVI) $(AM_V_texinfo) --build-dir=$(@:.dvi=.t2d) -o $@ $(AM_V_texidevnull) \
-	`test -f 'as.texinfo' || echo '$(srcdir)/'`as.texinfo
+	`test -f 'as.texi' || echo '$(srcdir)/'`as.texi
 
-as.pdf: as.texinfo $(as_TEXINFOS) 
+as.pdf: as.texi $(as_TEXINFOS) 
 	$(AM_V_TEXI2PDF)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
 	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir)' \
 	$(TEXI2PDF) $(AM_V_texinfo) --build-dir=$(@:.pdf=.t2p) -o $@ $(AM_V_texidevnull) \
-	`test -f 'as.texinfo' || echo '$(srcdir)/'`as.texinfo
+	`test -f 'as.texi' || echo '$(srcdir)/'`as.texi
 
-as.html: as.texinfo $(as_TEXINFOS) 
+as.html: as.texi $(as_TEXINFOS) 
 	$(AM_V_MAKEINFO)rm -rf $(@:.html=.htp)
 	$(AM_V_at)if $(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) \
-	 -o $(@:.html=.htp) `test -f 'as.texinfo' || echo '$(srcdir)/'`as.texinfo; \
+	 -o $(@:.html=.htp) `test -f 'as.texi' || echo '$(srcdir)/'`as.texi; \
 	then \
 	  rm -rf $@ && mv $(@:.html=.htp) $@; \
 	else \
@@ -648,40 +648,51 @@ ctags CTAGS:
 cscope cscopelist:
 
 
-distdir: $(DISTFILES)
-	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
-	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
-	list='$(DISTFILES)'; \
-	  dist_files=`for file in $$list; do echo $$file; done | \
-	  sed -e "s|^$$srcdirstrip/||;t" \
-	      -e "s|^$$topsrcdirstrip/|$(top_builddir)/|;t"`; \
-	case $$dist_files in \
-	  */*) $(MKDIR_P) `echo "$$dist_files" | \
-			   sed '/\//!d;s|^|$(distdir)/|;s,/[^/]*$$,,' | \
-			   sort -u` ;; \
-	esac; \
-	for file in $$dist_files; do \
-	  if test -f $$file || test -d $$file; then d=.; else d=$(srcdir); fi; \
-	  if test -d $$d/$$file; then \
-	    dir=`echo "/$$file" | sed -e 's,/[^/]*$$,,'`; \
-	    if test -d "$(distdir)/$$file"; then \
-	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
-	    fi; \
-	    if test -d $(srcdir)/$$file && test $$d != $(srcdir); then \
-	      cp -fpR $(srcdir)/$$file "$(distdir)$$dir" || exit 1; \
-	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
-	    fi; \
-	    cp -fpR $$d/$$file "$(distdir)$$dir" || exit 1; \
-	  else \
-	    test -f "$(distdir)/$$file" \
-	    || cp -p $$d/$$file "$(distdir)/$$file" \
-	    || exit 1; \
-	  fi; \
+check-DEJAGNU: site.exp
+	srcdir='$(srcdir)'; export srcdir; \
+	EXPECT=$(EXPECT); export EXPECT; \
+	if $(SHELL) -c "$(RUNTEST) --version" > /dev/null 2>&1; then \
+	  exit_status=0; l='$(DEJATOOL)'; for tool in $$l; do \
+	    if $(RUNTEST) $(AM_RUNTESTFLAGS) $(RUNTESTDEFAULTFLAGS) $(RUNTESTFLAGS); \
+	    then :; else exit_status=1; fi; \
+	  done; \
+	else echo "WARNING: could not find '$(RUNTEST)'" 1>&2; :;\
+	fi; \
+	exit $$exit_status
+site.exp: Makefile $(EXTRA_DEJAGNU_SITE_CONFIG)
+	@echo 'Making a new site.exp file ...'
+	@echo '## these variables are automatically generated by make ##' >site.tmp
+	@echo '# Do not edit here.  If you wish to override these values' >>site.tmp
+	@echo '# edit the last section' >>site.tmp
+	@echo 'set srcdir "$(srcdir)"' >>site.tmp
+	@echo "set objdir `pwd`" >>site.tmp
+	@echo 'set build_alias "$(build_alias)"' >>site.tmp
+	@echo 'set build_triplet $(build_triplet)' >>site.tmp
+	@echo 'set host_alias "$(host_alias)"' >>site.tmp
+	@echo 'set host_triplet $(host_triplet)' >>site.tmp
+	@echo 'set target_alias "$(target_alias)"' >>site.tmp
+	@echo 'set target_triplet $(target_triplet)' >>site.tmp
+	@list='$(EXTRA_DEJAGNU_SITE_CONFIG)'; for f in $$list; do \
+	  echo "## Begin content included from file $$f.  Do not modify. ##" \
+	   && cat `test -f "$$f" || echo '$(srcdir)/'`$$f \
+	   && echo "## End content included from file $$f. ##" \
+	   || exit 1; \
+	 done >> site.tmp
+	@echo "## End of auto-generated content; you can edit from here. ##" >> site.tmp
+	@if test -f site.exp; then \
+	   sed -e '1,/^## End of auto-generated content.*##/d' site.exp >> site.tmp; \
+	 fi
+	@-rm -f site.bak
+	@test ! -f site.exp || mv site.exp site.bak
+	@mv site.tmp site.exp
+
+distclean-DEJAGNU:
+	-rm -f site.exp site.bak
+	-l='$(DEJATOOL)'; for tool in $$l; do \
+	  rm -f $$tool.sum $$tool.log; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) \
-	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
-	  dist-info
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-DEJAGNU
 check: check-am
 all-am: Makefile $(INFO_DEPS) $(MANS)
 installdirs:
@@ -726,7 +737,7 @@ clean-am: clean-aminfo clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic
+distclean-am: clean-am distclean-DEJAGNU distclean-generic
 
 dvi: dvi-am
 
@@ -855,23 +866,23 @@ uninstall-am: uninstall-dvi-am uninstall-html-am uninstall-info-am \
 
 uninstall-man: uninstall-man1
 
-.MAKE: install-am install-strip
+.MAKE: check-am install-am install-strip
 
-.PHONY: all all-am check check-am clean clean-aminfo clean-generic \
-	clean-libtool cscopelist-am ctags-am dist-info distclean \
-	distclean-generic distclean-libtool distdir dvi dvi-am html \
-	html-am info info-am info-local install install-am \
-	install-data install-data-am install-data-local install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-man1 install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-aminfo \
-	maintainer-clean-generic mostlyclean mostlyclean-aminfo \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags-am uninstall uninstall-am uninstall-dvi-am \
-	uninstall-html-am uninstall-info-am uninstall-man \
-	uninstall-man1 uninstall-pdf-am uninstall-ps-am
+.PHONY: all all-am check check-DEJAGNU check-am clean clean-aminfo \
+	clean-generic clean-libtool cscopelist-am ctags-am dist-info \
+	distclean distclean-DEJAGNU distclean-generic \
+	distclean-libtool dvi dvi-am html html-am info info-am \
+	info-local install install-am install-data install-data-am \
+	install-data-local install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-man1 install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-aminfo maintainer-clean-generic mostlyclean \
+	mostlyclean-aminfo mostlyclean-generic mostlyclean-libtool pdf \
+	pdf-am ps ps-am tags-am uninstall uninstall-am \
+	uninstall-dvi-am uninstall-html-am uninstall-info-am \
+	uninstall-man uninstall-man1 uninstall-pdf-am uninstall-ps-am
 
 .PRECIOUS: Makefile
 

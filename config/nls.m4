@@ -23,9 +23,14 @@ AC_DEFUN([AM_NLS],
 [
   AC_MSG_CHECKING([whether NLS is requested])
   dnl Default is enabled NLS
-  AC_ARG_ENABLE(nls,
-    [  --disable-nls           do not use Native Language Support],
-    USE_NLS=$enableval, USE_NLS=yes)
+dnl XXXAR: disable NLS by default
+dnl  AC_ARG_ENABLE(nls,
+dnl    [  --disable-nls           do not use Native Language Support],
+dnl    USE_NLS=$enableval, USE_NLS=yes)
+AC_ARG_ENABLE([nls],
+    [  --enable-nls           use Native Language Support],
+    USE_NLS=$enableval, USE_NLS=no)
+AS_IF([test "x$enable_nls" = "xyes"], USE_NLS=yes)
   AC_MSG_RESULT($USE_NLS)
   AC_SUBST(USE_NLS)
 ])

@@ -1456,7 +1456,7 @@ Optional Features:
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
   --enable-install-libbfd controls installation of libbfd and related headers
-  --disable-nls           do not use Native Language Support
+  --enable-nls           use Native Language Support
   --enable-cgen-maint=dir    build cgen generated files
 
 Optional Packages:
@@ -12955,13 +12955,16 @@ fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether NLS is requested" >&5
 $as_echo_n "checking whether NLS is requested... " >&6; }
-    # Check whether --enable-nls was given.
+  # Check whether --enable-nls was given.
 if test "${enable_nls+set}" = set; then :
   enableval=$enable_nls; USE_NLS=$enableval
 else
-  USE_NLS=yes
+  USE_NLS=no
 fi
 
+if test "x$enable_nls" = "xyes"; then :
+  USE_NLS=yes
+fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_NLS" >&5
 $as_echo "$USE_NLS" >&6; }
 

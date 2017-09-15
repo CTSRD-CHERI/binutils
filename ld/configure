@@ -1458,7 +1458,7 @@ Optional Features:
   --enable-64-bit-bfd     64-bit support (on hosts with narrower word sizes)
   --enable-werror         treat compile warnings as errors
   --enable-build-warnings enable build-time compiler warnings
-  --disable-nls           do not use Native Language Support
+  --enable-nls           use Native Language Support
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
@@ -13129,13 +13129,16 @@ fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether NLS is requested" >&5
 $as_echo_n "checking whether NLS is requested... " >&6; }
-    # Check whether --enable-nls was given.
+  # Check whether --enable-nls was given.
 if test "${enable_nls+set}" = set; then :
   enableval=$enable_nls; USE_NLS=$enableval
 else
-  USE_NLS=yes
+  USE_NLS=no
 fi
 
+if test "x$enable_nls" = "xyes"; then :
+  USE_NLS=yes
+fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_NLS" >&5
 $as_echo "$USE_NLS" >&6; }
 

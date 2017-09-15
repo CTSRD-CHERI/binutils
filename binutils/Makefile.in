@@ -1247,7 +1247,7 @@ sysinfo.o: sysinfo.c
 	  $(CC_FOR_BUILD) -c -I. $(AM_CFLAGS) $(CFLAGS) $(srcdir)/sysinfo.c -Wno-error ; \
 	fi
 
-bin2c$(EXEEXT_FOR_BUILD):
+bin2c$(EXEEXT_FOR_BUILD): $(LIBINTL_DEP)
 	$(CC_FOR_BUILD) -o $@ $(AM_CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) $(LIBINTL) $(srcdir)/bin2c.c $(srcdir)/version.c
 
 embedspu: embedspu.sh

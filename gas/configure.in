@@ -5,20 +5,21 @@ dnl brackets, be sure changequote invocations surround it.
 dnl
 dnl
 dnl v2.5 needed for --bindir et al
-AC_PREREQ(2.57)
-AC_INIT(as.h)
+AC_PREREQ(2.59)
+AC_INIT([gas], [2.17.50])
+AC_CONFIG_SRCDIR([as.h])
+AC_CONFIG_MACRO_DIRS([..])
+
 
 dnl Autoconf 2.57 will find the aux dir without this.  However, unless
 dnl we specify this explicitly, automake-1.7 will assume that ylwrap is in
 dnl gas/ instead of gas/../.
-AC_CONFIG_AUX_DIR(..)
+AC_CONFIG_AUX_DIR([..])
 AC_CANONICAL_SYSTEM
 AC_ISC_POSIX
 
-changequote(,)dnl
-BFD_VERSION=`sed -n -e 's/^.._INIT_AUTOMAKE.*,[ 	]*\([^ 	]*\)[ 	]*).*/\1/p' < ${srcdir}/../bfd/configure.in`
-changequote([,])dnl
-AM_INIT_AUTOMAKE(gas, ${BFD_VERSION})
+AM_INIT_AUTOMAKE
+
 
 AM_PROG_LIBTOOL
 

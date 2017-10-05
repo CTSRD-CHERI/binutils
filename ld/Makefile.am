@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus dejagnu
+AUTOMAKE_OPTIONS = 1.11 subdir-objects no-dist foreign dejagnu info-in-builddir
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
 SUBDIRS = po
@@ -91,10 +91,10 @@ CXX_FOR_TARGET = ` \
   fi`
 
 noinst_PROGRAMS = ld-new
-info_TEXINFOS = ld.texinfo
-ld_TEXINFOS = configdoc.texi
-noinst_TEXINFOS = ldint.texinfo
-man_MANS = ld.1
+# info_TEXINFOS = ld.texinfo
+# ld_TEXINFOS = configdoc.texi
+# noinst_TEXINFOS = ldint.texinfo
+# man_MANS = ld.1
 
 AM_MAKEINFOFLAGS = -I $(srcdir) -I $(BFDDIR)/doc -I ../bfd/doc \
 		   -I $(top_srcdir)/../libiberty
@@ -452,11 +452,11 @@ STAGESTUFF = *.o ldscripts/* e*.c
 
 # Disable -Werror, if it has been enabled, since old versions of bison/
 # yacc will produce working code which contain compile time warnings. 
-ldgram.o:
+ldgram.o: ldgram.c
 	$(COMPILE) -c $< $(NO_WERROR)
-ldlex.o:
+ldlex.o: ldlex.c
 	$(COMPILE) -c $< $(NO_WERROR)
-deffilep.o:
+deffilep.o: deffilep.c
 	$(COMPILE) -c $< $(NO_WERROR)
 
 # At the moment this is just a list of those emulation template files
@@ -500,8 +500,7 @@ stringify.sed: ${srcdir}/emultempl/$(STRINGIFY)
 
 # These all start with e so 'make clean' can find them.
 
-GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@
- @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
+GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
 GEN_DEPENDS = $(srcdir)/genscripts.sh stringify.sed
 ELF_DEPS = $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/elf-generic.em
 ELF_GEN_DEPS = $(srcdir)/emultempl/generic.em $(srcdir)/emultempl/elf-generic.em $(srcdir)/emultempl/genelf.em

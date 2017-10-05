@@ -1,6 +1,7 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = 1.9 cygnus
+AUTOMAKE_OPTIONS = 1.11 subdir-objects no-dist foreign dejagnu info-in-builddir
+TEXINFO_TEX = ../../texinfo/texinfo.tex
 
 DOCFILES = aoutx.texi  archive.texi archures.texi \
 	bfdt.texi  cache.texi coffcode.texi \
@@ -20,7 +21,7 @@ PROTOS = archive.p archures.p bfd.p \
 
 IPROTOS = cache.ip libbfd.ip reloc.ip init.ip archures.ip coffcode.ip
 
-# SRCDOC, SRCPROT, SRCIPROT only used to sidestep Sun Make bug in interaction 
+# SRCDOC, SRCPROT, SRCIPROT only used to sidestep Sun Make bug in interaction
 # between VPATH and suffix rules.  If you use GNU Make, perhaps other Makes,
 # you don't need these three:
 SRCDOC = $(srcdir)/../aoutx.h  $(srcdir)/../archive.c \
@@ -51,8 +52,8 @@ SRCIPROT = $(srcdir)/../cache.c $(srcdir)/../libbfd.c \
 
 TEXIDIR = $(srcdir)/../../texinfo/fsf
 
-info_TEXINFOS = bfd.texinfo
-bfd_TEXINFOS = $(DOCFILES) bfdsumm.texi
+# info_TEXINFOS = bfd.texinfo
+# bfd_TEXINFOS = $(DOCFILES) bfdsumm.texi
 
 MKDOC = chew$(EXEEXT_FOR_BUILD)
 
@@ -285,7 +286,7 @@ bfdver.texi: $(srcdir)/Makefile.in
 	  echo "@set BUGURL $(REPORT_BUGS_TEXI)" >> bfdver.texi; \
 	fi
 
-noinst_TEXINFOS = bfdint.texi
+# noinst_TEXINFOS = bfdint.texi
 
 MOSTLYCLEANFILES = $(MKDOC) *.o
 

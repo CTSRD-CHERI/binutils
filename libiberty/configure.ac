@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script
 
 AC_PREREQ(2.59)
-AC_INIT
+AC_INIT([libiberty], [1.0])
 AC_CONFIG_SRCDIR([xmalloc.c])
 
 # This works around the fact that libtool configuration may change LD
@@ -20,24 +20,7 @@ AC_ARG_WITH(cross-host,
 AC_ARG_WITH(newlib,
 [  --with-newlib                    Configuring with newlib])
 
-if test "${srcdir}" = "."; then
-  if test -n "${with_build_subdir}"; then
-    libiberty_topdir="${srcdir}/../.."
-    with_target_subdir=
-  elif test -z "${with_target_subdir}"; then
-    libiberty_topdir="${srcdir}/.."
-  else
-    if test "${with_target_subdir}" != "."; then
-      libiberty_topdir="${srcdir}/${with_multisrctop}../.."
-    else
-      libiberty_topdir="${srcdir}/${with_multisrctop}.."
-    fi
-  fi
-else
-  libiberty_topdir="${srcdir}/.."
-fi
-AC_SUBST(libiberty_topdir)
-AC_CONFIG_AUX_DIR($libiberty_topdir)
+AC_CONFIG_AUX_DIR([..])
 
 dnl Very limited version of automake's enable-maintainer-mode
 
@@ -102,7 +85,7 @@ AC_SUBST(HAVE_PERL)
 AC_CANONICAL_HOST
 
 dnl When we start using automake:
-dnl AM_INIT_AUTOMAKE(libiberty, 1.0)
+dnl AM_INIT_AUTOMAKE
 
 dnl These must be called before AM_PROG_LIBTOOL, because it may want
 dnl to call AC_CHECK_PROG.

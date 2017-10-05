@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = 1.9 cygnus
+AUTOMAKE_OPTIONS = 1.9 foreign no-dist
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 
 # Uncomment the following line when doing a release.
@@ -10,7 +10,9 @@ INCDIR = $(srcdir)/../include
 CSEARCH = -I. -I$(srcdir) -I$(INCDIR)
 MKDEP = gcc -MM
 
-SUBDIRS = doc po
+# Docs don't build properly on modern systems -> skip
+# SUBDIRS = doc po
+SUBDIRS = po
 
 bfddocdir = doc
 bfdlibdir = @bfdlibdir@

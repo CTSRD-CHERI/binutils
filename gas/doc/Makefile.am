@@ -1,6 +1,7 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = 1.8 cygnus
+AUTOMAKE_OPTIONS = 1.11 subdir-objects no-dist foreign dejagnu info-in-builddir
+TEXINFO_TEX = ../../texinfo/texinfo.tex
 
 # What version of the manual you want; "all" includes everything
 CONFIG=all
@@ -15,7 +16,7 @@ POD2MAN = pod2man --center="GNU Development Tools" \
 
 man_MANS = as.1
 
-info_TEXINFOS = as.texinfo 
+info_TEXINFOS = as.texi 
 as_TEXINFOS = asconfig.texi $(CPU_DOCS)
 
 AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \

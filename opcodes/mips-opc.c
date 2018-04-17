@@ -334,6 +334,9 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"cllw",      "t,+b",       0x4a00000e, 0xffe007ff, 0, 0, I1},
 {"cllc",      "+w,+b",      0x4a00000f, 0xffe007ff, 0, 0, I1},
 
+{"cbuildcap", "+w,+b,+v",   0x4800001d, 0xffe0003f, 0, 0, I1},
+{"ccopytype", "+w,+b,+v",   0x4800001e, 0xffe0003f, 0, 0, I1},
+{"ctestsubset", "t,+b,+v",  0x48000020, 0xffe0003f, 0, 0, I1},
 
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */
 {"b",       "p",	0x04010000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* bgez 0 */

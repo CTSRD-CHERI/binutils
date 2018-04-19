@@ -336,6 +336,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 
 {"cbuildcap", "+w,+b,+v",   0x4800001d, 0xffe0003f, 0, 0, I1},
 {"ccopytype", "+w,+b,+v",   0x4800001e, 0xffe0003f, 0, 0, I1},
+{"ccseal",    "+w,+b,+v",   0x4800001f, 0xffe0003f, 0, 0, I1},
 {"ctestsubset", "t,+b,+v",  0x48000020, 0xffe0003f, 0, 0, I1},
 
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */

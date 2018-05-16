@@ -8424,6 +8424,8 @@ validate_mips_insn (const struct mips_opcode *opc)
 	  case 'H': USE_BITS (OP_MASK_EXTMSBD,	OP_SH_EXTMSBD);	break;
 	  case 'I': break;
 	  case 's': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
+	  case 'n': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
+	  case 'o': USE_BITS (OP_MASK_CDELTA,	OP_SH_CDELTA);	break;
 	  case 'O': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
 	  case 'P': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
 	  case 'Q': USE_BITS (OP_MASK_CDELTA2,  OP_SH_CDELTA2); break;
@@ -9225,6 +9227,33 @@ do_msbd:
 		  imm_expr.X_op = O_absent;
 		  s = expr_end;
 		  continue;
+		case 'n':
+		  if (s[0] == '$')
+		    as_bad (_("Expected immediate not register name"));
+		  my_getExpression (&imm_expr, s);
+		  check_absolute_expr (ip, &imm_expr);
+		  if ((imm_expr.X_add_number >= 1<<10) ||
+		     (imm_expr.X_add_number < 1-(1<<(10))))
+		    as_bad (_("immediate (%ld) too large (or small) for immediate"),
+		              (long)imm_expr.X_add_number);
+		  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
+		case 'o':
+		  if (s[0] == '$')
+		    as_bad (_("Expected immediate not register name"));
+
+		  my_getExpression (&imm_expr, s);
+		  check_absolute_expr (ip, &imm_expr);
+		  if (imm_expr.X_add_number >= (1<<11))
+		    as_bad (_("immediate (%ld) too large for immediate"),
+		              (long)imm_expr.X_add_number);
+		  INSERT_OPERAND (CDELTA, *ip, imm_expr.X_add_number);
+		  imm_expr.X_op = O_absent;
+		  s = expr_end;
+		  continue;
+
 
 		case 'O':
 		  my_getExpression (&imm_expr, s);

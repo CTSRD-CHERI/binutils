@@ -318,6 +318,8 @@ struct mips_opcode
    "+R" 8-bit signed offset (OP_*_CDELTA2): <<3 bits
    "+b" 5 bit source or target capability register (OP_*_RD)
    "+s" 11-bit signed offset (OP_*_CDELTA): <<4 bits
+   "+n" 11-bit signed offset (OP_*_CDELTA): not shifted
+   "+o" 11-bit unsigned offset (OP_*_CDELTA): not shifted
    "+v" 5 bit target capability register (OP_*_FD)
    "+w" 5 bit source or destination capability register (OP_*_RT)
    "+x" 5 bit source or destination capability register (OP_*_RS)

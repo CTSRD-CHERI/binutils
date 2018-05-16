@@ -925,7 +925,18 @@ print_insn_args (const char *d,
                 delta -= (OP_MASK_CDELTA + 1);
 	      (*info->fprintf_func) (info->stream, "%d", delta << 4);
 	      break;
-
+	    case 'n':
+	      /* Signed 11 bit immediate (CIncOffsetImm) */
+	      delta = ((l >> OP_SH_CDELTA) & OP_MASK_CDELTA);
+              if (delta > (OP_MASK_CDELTA >> 1))
+                delta -= (OP_MASK_CDELTA + 1);
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+	    case 'o':
+	      /* Unsigned 11 bit immediate (CSetBoundsImm */
+	      delta = ((l >> OP_SH_CDELTA) & OP_MASK_CDELTA);
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
 	    case 'O':
               delta = ((l >> OP_SH_CDELTA2) & OP_MASK_CDELTA2);
               if (delta > (OP_MASK_CDELTA2 >> 1))

@@ -206,6 +206,10 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"csettype", "+w,+b,m",	    0x48800001, 0xffe0003f, 0, 0, I1},
 {"cincbase", "+w,+b,m",	    0x48800002, 0xffe0003f, 0, 0, I1},
 {"csetlen",  "+w,+b,m",	    0x48800003, 0xffe0003f, 0, 0, I1},
+/* Binutils is stupid and makes it really hard to have the same mnemonic for different instrs */
+{"csetboundsimm", "+w,+b,+o", 0x4a800000, 0xffe00000, 0, 0, I1},
+/* register version of csetbounds */
+// Can't do this: {"csetbounds", "+w,+b,+o", 0x4a800000, 0xffe00000, 0, 0, I1},
 {"csetbounds", "+w,+b,m",   0x48200000, 0xffe0003f, 0, 0, I1},
 {"csetboundsexact", "+w,+b,m", 0x48000009, 0xffe0003f, 0, 0, I1},
 {"csetcause", "m",          0x48800004, 0xfffff83f, 0, 0, I1},
@@ -214,6 +218,11 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"csetepcc", "+b",          0x49bf0000, 0xffff07ff, 0, 0, I1},
 {"cgetepcc", "+w",          0x49a0f800, 0xffe0ffff, 0, 0, I1},
 {"cmove",    "+w,+b",       0x49a00000, 0xffe007ff, 0, 0, I1},
+/* Binutils is stupid and makes it really hard to have the same mnemonic for different instrs */
+{"cincoffsetimm", "+w,+b,+n", 0x4a600000, 0xffe00000, 0, 0, I1},
+// TODO: this would be much better
+// {"cincoffset", "+w,+b,+n", 0x4a600000, 0xffe00000, 0, 0, I1},
+/* register version of cincoffset */
 {"cincoffset", "+w,+b,m",   0x49a00000, 0xffe0003f, 0, 0, I1},
 {"csetoffset", "+w,+b,m",   0x49a00001, 0xffe0003f, 0, 0, I1},
 {"ccleartag", "+w,+b",	    0x48800005, 0xffe007ff, 0, 0, I1},

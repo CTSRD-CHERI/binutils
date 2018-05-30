@@ -9304,10 +9304,15 @@ do_msbd:
 		case 'w':
 		case 'b':
 		case 'v':
-                case 'x':
-		  if (s[0] == '$' && s[1] == 'c' && ISDIGIT (s[2]))
-		    {
-                      c = *args;
+		case 'x': {
+		  regno = -1;
+		  if (strncmp(s, "$ddc", strlen("$ddc")) == 0) {
+		    s += strlen("$ddc");
+		    regno = 0;
+		  } else if (strncmp(s, "$cnull", strlen("$cnull")) == 0) {
+		    s += strlen("$cnull");
+		    regno = 0;
+		  } else if (s[0] == '$' && s[1] == 'c' && ISDIGIT (s[2])) {
 		      ++s;
 		      ++s;
 		      regno = 0;
@@ -9318,32 +9323,28 @@ do_msbd:
 			  ++s;
 			}
 		      while (ISDIGIT (*s));
-		      if (regno > 31)
-			as_bad (_("Invalid register number (%d)"), regno);
-		      else if (c == 'w')
-			{
-			  INSERT_OPERAND (RT, *ip, regno);
-			  continue;
-			}
-		      else if (c == 'b')
-			{
-			  INSERT_OPERAND (RD, *ip, regno);
-			  continue;
-			}
-		      else if (c == 'v')
-			{
-			  INSERT_OPERAND (FD, *ip, regno);
-			  continue;
-			}
-                      else if (c == 'x')
-                        {
-                          INSERT_OPERAND (RS, *ip, regno);
-                          continue;
-                        }
-		    }
-		  else
-		    as_bad (_("Invalid capability register number"));
+		  } else {
+		    as_bad (_("Invalid capability register number %.8s"), s);
+		  }
+
+		  c = *args;
+		  if (regno > 31) {
+		     as_bad (_("Invalid register number (%d)"), regno);
+		  } else if (c == 'w') {
+		    INSERT_OPERAND (RT, *ip, regno);
+		    continue;
+		  } else if (c == 'b'){
+		    INSERT_OPERAND (RD, *ip, regno);
+		    continue;
+		  } else if (c == 'v') {
+		    INSERT_OPERAND (FD, *ip, regno);
+		    continue;
+		  } else if (c == 'x') {
+		    INSERT_OPERAND (RS, *ip, regno);
+		    continue;
+		  }
 		  break;
+		}
 
 		case 't': /* Coprocessor register number.  */
 		  if (s[0] == '$' && ISDIGIT (s[1]))

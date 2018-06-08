@@ -351,6 +351,9 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"ccseal",    "+w,+b,+v",   0x4800001f, 0xffe0003f, 0, 0, I1},
 {"ctestsubset", "t,+b,+v",  0x48000020, 0xffe0003f, 0, 0, I1},
 
+{"creadhwr",  "+w,G", 0x4800037f, 0xffe007ff, 0, 0, I1},
+{"cwritehwr", "+w,G", 0x480003bf, 0xffe007ff, 0, 0, I1},
+
 {"b",       "p",	0x10000000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* beq 0,0 */
 {"b",       "p",	0x04010000, 0xffff0000,	UBD,			INSN2_ALIAS,	I1	},/* bgez 0 */
 {"bal",     "p",	0x04110000, 0xffff0000,	UBD|WR_31,		INSN2_ALIAS,	I1	},/* bgezal 0*/
